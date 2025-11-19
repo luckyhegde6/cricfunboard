@@ -1,0 +1,87 @@
+// components/Navbar.tsx
+"use client";
+import Link from "next/link";
+import { useState } from "react";
+import { usePathname } from "next/navigation";
+import AuthButton from "./AuthButton";
+import { useSession } from "next-auth/react";
+import { useEffect } from "react";
+import LiveScoreBanner from "./LiveScoreBanner";
+
+export default function Navbar() {
+    const pathname = usePathname();
+    const [open, setOpen] = useState(false);
+    const { data: session } = useSession();
+    const isAdmin = (session?.user as any)?.role === "admin";
+    const [announcement, setAnnouncement] = useState("");
+
+    useEffect(() => {
+        fetch("/api/admin/settings")
+            .then(res => res.json())
+            .then(data => {
+                if (data.announcement) setAnnouncement(data.announcement);
+            })
+            .catch(err => console.error(err));
+    }, [pathname]); // Refresh on nav change
+
+    return (
+        <>
+            {announcement && (
+                <div className="bg-yellow-100 text-yellow-800 text-center text-sm py-2 px-4 font-medium border-b border-yellow-200">
+                    📢 {announcement}
+                </div>
+            )}
+            <LiveScoreBanner />
+            <header className="bg-white border-b sticky top-0 z-40">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex items-center justify-between h-16">
+                        <div className="flex items-center gap-4">
+                            <Link href="/" className="flex items-center gap-3">
+                                <img src="/icons/logo.svg" alt="CricBoard" className="w-9 h-9" />
+                                <span className="font-semibold text-lg">CricBoard</span>
+                            </Link>
+
+                            <nav className="hidden md:flex items-center gap-1">
+                                <NavLink href="/matches" active={pathname?.startsWith("/matches")}>Matches</NavLink>
+                                <NavLink href="/teams" active={pathname?.startsWith("/teams")}>Teams</NavLink>
+                                {isAdmin && (
+                                    <NavLink href="/admin" active={pathname?.startsWith("/admin")}>Admin</NavLink>
+                                )}
+
+                                {/* Team dropdown */}
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setOpen((s) => !s)}
+                                        className="ml-2 px-3 py-1.5 text-sm rounded-md border hover:bg-slate-50"
+                                    >
+                                        Teams ▾
+                                    </button>
+                                    {open && (
+                                        <div className="absolute left-0 mt-2 w-44 bg-white border rounded shadow z-50">
+                                            <Link href="/teams/1" className="block px-3 py-2 hover:bg-slate-50">Team A</Link>
+                                            <Link href="/teams/2" className="block px-3 py-2 hover:bg-slate-50">Team B</Link>
+                                            <Link href="/teams" className="block px-3 py-2 hover:bg-slate-50">All teams</Link>
+                                        </div>
+                                    )}
+                                </div>
+                            </nav>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                            <div className="hidden sm:block text-sm text-slate-500 mr-2">Follow live matches</div>
+                            <AuthButton />
+                        </div>
+                    </div>
+                </div>
+            </header>
+        </>
+    );
+}
+
+function NavLink({ href, children, active }: { href: string; children: React.ReactNode; active?: boolean }) {
+    return (
+        <Link href={href} className={`px-3 py-1.5 rounded text-sm ${active ? "bg-slate-100 text-slate-900" : "text-slate-600 hover:text-slate-900"}`}>
+            {children}
+        </Link>
+    );
+}
