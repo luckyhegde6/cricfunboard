@@ -2,12 +2,15 @@
 import mongoose, { Schema, model, models } from "mongoose";
 
 const PlayerSchema = new Schema({
+    playerId: { type: String, required: true }, // Unique identifier for the player
     name: { type: String, required: true },
     role: {
         type: String,
         enum: ["batsman", "bowler", "allrounder", "keeper"],
         required: true
     },
+    isCaptain: { type: Boolean, default: false },
+    isViceCaptain: { type: Boolean, default: false },
     isExtra: { type: Boolean, default: false },
     email: { type: String }, // Optional
     contact: { type: String }, // Optional

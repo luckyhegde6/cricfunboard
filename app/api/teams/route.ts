@@ -5,6 +5,16 @@ import dbConnect from "@/lib/db";
 import Team from "@/models/Team";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
+export async function GET() {
+    try {
+        await dbConnect();
+        const teams = await Team.find({}).select("_id name contactEmail players").lean();
+        return NextResponse.json(teams);
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+}
+
 export async function POST(req: Request) {
     try {
         const session = await getServerSession(authOptions);

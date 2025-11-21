@@ -12,7 +12,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en">
       <head>
-        <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#0f172a" />
         <link rel="icon" href="/favicon.svg" />
       </head>

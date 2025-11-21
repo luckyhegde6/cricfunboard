@@ -2,11 +2,29 @@
 "use client";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function AuthButton() {
   const { data: session, status } = useSession();
   const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const isAdmin = (session?.user as any)?.role === "admin";
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+
+    if (open) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }
+  }, [open]);
 
   if (status === "loading") {
     return <div className="w-24 h-9 rounded bg-slate-100 animate-pulse" />;
@@ -21,7 +39,7 @@ export default function AuthButton() {
   }
 
   return (
-    <div className="relative">
+    <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setOpen((s) => !s)}
         aria-haspopup="true"
@@ -36,8 +54,10 @@ export default function AuthButton() {
 
       {open && (
         <div className="absolute right-0 mt-2 w-44 bg-white border rounded shadow-lg py-2 text-sm z-50">
-          <Link href="/profile" className="block px-3 py-2 hover:bg-slate-50">Profile</Link>
-          <Link href="/admin" className="block px-3 py-2 hover:bg-slate-50">Admin</Link>
+          <Link href="/profile" className="block px-3 py-2 hover:bg-slate-50" onClick={() => setOpen(false)}>Profile</Link>
+          {isAdmin && (
+            <Link href="/admin" className="block px-3 py-2 hover:bg-slate-50" onClick={() => setOpen(false)}>Admin</Link>
+          )}
           <button onClick={() => signOut({ callbackUrl: "/" })} className="w-full text-left px-3 py-2 hover:bg-slate-50">Sign out</button>
         </div>
       )}

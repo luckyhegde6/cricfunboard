@@ -12,8 +12,12 @@ async function fetchMatches() {
   }
 }
 
+import { getServerSession } from "next-auth";
+import { authOptions } from "./api/auth/[...nextauth]/route";
+
 export default async function Home() {
   const matches = await fetchMatches();
+  const session = await getServerSession(authOptions);
 
   return (
     <div className="space-y-8">
@@ -24,7 +28,9 @@ export default async function Home() {
             <p className="mt-2 text-slate-600 max-w-xl">Follow live matches in your area. Real-time updates, quick score entry for scorers, and an admin dashboard to manage matches.</p>
             <div className="mt-4 flex gap-3">
               <Link href="/matches" className="px-4 py-2 bg-slate-800 text-white rounded-md shadow-sm">See Matches</Link>
-              <Link href="/auth/signin" className="px-4 py-2 border rounded-md text-slate-700">Sign in as scorer</Link>
+              {!session && (
+                <Link href="/auth/signin" className="px-4 py-2 border rounded-md text-slate-700">Sign in as scorer</Link>
+              )}
             </div>
           </div>
 

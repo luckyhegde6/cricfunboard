@@ -3,7 +3,7 @@ import mongoose, { Schema, model, models } from "mongoose";
 
 const MatchEventSchema = new Schema({
     matchId: { type: Schema.Types.ObjectId, ref: "Match", required: true, index: true },
-    type: { type: String, enum: ["dot", "runs", "wicket", "nb", "wd", "undo"], required: true },
+    type: { type: String, enum: ["dot", "runs", "wicket", "nb", "wd", "bye", "lb", "undo"], required: true },
     runs: { type: Number, default: 0 },
     batsman: { type: String },
     bowler: { type: String },

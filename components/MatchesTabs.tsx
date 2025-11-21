@@ -11,27 +11,46 @@ export type MatchType = {
     startTime?: string;
     status?: "scheduled" | "live" | "completed" | "abandoned";
     summary?: { runs: number; wickets: number; overs: number };
+    scorerId?: string;
+    captainId?: string;
+    viceCaptainId?: string;
 };
 
-export default function MatchesTabs({ matches }: { matches: MatchType[] }) {
-    const [tab, setTab] = useState<"all" | "live" | "completed">("all");
+export default function MatchesTabs({ matches, userId }: { matches: MatchType[], userId?: string }) {
+    const [tab, setTab] = useState<"all" | "live" | "scheduled" | "assigned">("all");
 
     const live = useMemo(() => matches.filter(m => m.status === "live"), [matches]);
     const completed = useMemo(() => matches.filter(m => m.status === "completed" || m.status === "abandoned"), [matches]);
     const scheduled = useMemo(() => matches.filter(m => m.status === "scheduled"), [matches]);
 
+    const assigned = useMemo(() => {
+        if (!userId) return [];
+        return matches.filter(m =>
+            m.scorerId === userId ||
+            m.captainId === userId ||
+            m.viceCaptainId === userId
+        );
+    }, [matches, userId]);
+
+    // Switch to assigned tab by default if user has assignments and is on "all" initially? 
+    // Or just let them click. Let's just add the tab.
+
     return (
         <div className="space-y-4">
-            <div className="flex gap-2 items-center">
+            <div className="flex gap-2 items-center flex-wrap">
                 <TabButton label="All" active={tab === "all"} onClick={() => setTab("all")} />
                 <TabButton label={`Live (${live.length})`} active={tab === "live"} onClick={() => setTab("live")} />
-                <TabButton label={`Scheduled (${scheduled.length})`} active={tab === "completed"} onClick={() => setTab("completed")} />
+                <TabButton label={`Scheduled (${scheduled.length})`} active={tab === "scheduled"} onClick={() => setTab("scheduled")} />
+                {userId && assigned.length > 0 && (
+                    <TabButton label={`Assigned (${assigned.length})`} active={tab === "assigned"} onClick={() => setTab("assigned")} />
+                )}
             </div>
 
             <div>
                 {tab === "all" && <AllTab matches={matches} />}
                 {tab === "live" && <LiveTab matches={live} />}
-                {tab === "completed" && <CompletedTab matches={[...completed, ...scheduled]} />}
+                {tab === "scheduled" && <ScheduledTab matches={scheduled} />}
+                {tab === "assigned" && <AssignedTab matches={assigned} />}
             </div>
         </div>
     );
@@ -74,18 +93,23 @@ function LiveTab({ matches }: { matches: MatchType[] }) {
     );
 }
 
-function CompletedTab({ matches }: { matches: MatchType[] }) {
-    if (!matches.length) return <div className="text-sm text-slate-500">No completed matches.</div>;
+function ScheduledTab({ matches }: { matches: MatchType[] }) {
+    if (!matches.length) return <div className="text-sm text-slate-500">No scheduled matches.</div>;
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {matches.map(m => (
-                <div key={m._id} className="bg-white rounded border p-3">
-                    <div className="flex justify-between">
-                        <div><div className="font-medium">{m.teamA} vs {m.teamB}</div><div className="text-sm text-slate-500">{m.venue}</div></div>
-                        <div className="text-right"><div className="font-semibold">{m.summary?.runs}/{m.summary?.wickets}</div><div className="text-xs text-slate-500">{m.status}</div></div>
-                    </div>
-                </div>
-            ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {matches.map(m => <MatchCard key={m._id} match={m} />)}
+        </div>
+    );
+}
+
+function AssignedTab({ matches }: { matches: MatchType[] }) {
+    if (!matches.length) return <div className="text-sm text-slate-500">No assigned matches.</div>;
+    return (
+        <div className="space-y-4">
+            <h3 className="text-sm font-medium text-slate-500">Your Assigned Matches</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {matches.map(m => <MatchCard key={m._id} match={m} />)}
+            </div>
         </div>
     );
 }

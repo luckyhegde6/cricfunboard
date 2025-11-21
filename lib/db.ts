@@ -29,7 +29,7 @@ async function dbConnect(): Promise<typeof mongoose> {
   }
 
   if (!cached.promise) {
-    logger.info("Connecting to MongoDB...", { url: MONGODB_URI });
+    logger.info({ url: MONGODB_URI }, "Connecting to MongoDB...");
     cached.promise = mongoose
       .connect(MONGODB_URI)
       .then((mongooseInstance) => {
