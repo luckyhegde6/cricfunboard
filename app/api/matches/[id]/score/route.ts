@@ -18,16 +18,30 @@ const eventSchema = z.object({
     meta: z.any().optional(),
 });
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
     await dbConnect();
 
     const session = await getServerSession(authOptions);
     if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    const role = (session as any).user?.role ?? "user";
-    if (!["scorer", "admin"].includes(role)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-    const matchId = params.id;
+    const { id: matchId } = await params;
     if (!mongoose.Types.ObjectId.isValid(matchId)) return NextResponse.json({ error: "Invalid match id" }, { status: 400 });
+
+    // Fetch match to check permissions
+    const match = await MatchModel.findById(matchId);
+    if (!match) return NextResponse.json({ error: "Match not found" }, { status: 404 });
+
+    const userId = (session as any).user?.id;
+    const userRole = (session as any).user?.role;
+
+    const isAssigned =
+        (match.scorerId && match.scorerId.toString() === userId) ||
+        (match.captainId && match.captainId.toString() === userId) ||
+        (match.viceCaptainId && match.viceCaptainId.toString() === userId);
+
+    if (userRole !== "admin" && !isAssigned) {
+        return NextResponse.json({ error: "Forbidden: You are not assigned to score this match" }, { status: 403 });
+    }
 
     const body = await req.json().catch(() => ({}));
     const parsed = eventSchema.safeParse(body);
@@ -44,13 +58,13 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     // Transactions require replica set. Attempt transaction, otherwise fallback to non-transactional route.
     const sessionDb = await mongoose.startSession();
     try {
-        let usedTransaction = true;
         await sessionDb.withTransaction(async () => {
             // insert event
-            const created = await MatchEvent.create([ev], { session: sessionDb });
+            await MatchEvent.create([ev], { session: sessionDb });
+
             // aggregate summary from events collection
             const agg = await MatchEvent.aggregate([
-                { $match: { matchId: new mongoose.Types.ObjectId(matchId) } },
+                { $match: { matchId: new mongoose.Types.ObjectId(matchId), innings: match.currentInnings } },
                 {
                     $group: {
                         _id: "$matchId",
@@ -60,32 +74,50 @@ export async function POST(req: Request, { params }: { params: { id: string } })
                         lastEvents: { $push: { type: "$type", runs: "$runs", batsman: "$batsman", bowler: "$bowler", createdAt: "$createdAt", by: "$by" } },
                     },
                 },
-            ]).session(sessionDb).exec();
+            ]).session(sessionDb);
 
             const aggRes = agg[0] || { totalRuns: 0, totalWickets: 0, totalBalls: 0, lastEvents: [] };
-
-            // compute overs from balls (6 balls = 1 over)
             const totalBalls = aggRes.totalBalls || 0;
-            const overs = Math.floor(totalBalls / 6) + ((totalBalls % 6) / 10); // e.g., 12 balls => 2.0, 13 => 2.1
+            const recent = aggRes.lastEvents.slice(-10).reverse();
 
-            // update match summary + slice recent events
-            const recent = aggRes.lastEvents.slice(-10).reverse(); // newest first
+            // Determine which innings summary to update
+            const updateField = match.currentInnings === 1 ? "innings1Summary" : "innings2Summary";
+
+            // Prepare update object
+            const updateOps: any = {
+                $set: {
+                    [`${updateField}.runs`]: aggRes.totalRuns || 0,
+                    [`${updateField}.wickets`]: aggRes.totalWickets || 0,
+                    [`${updateField}.overs`]: Math.floor(totalBalls / 6),
+                    [`${updateField}.balls`]: totalBalls,
+                    // Also update legacy summary for compatibility
+                    "summary.runs": aggRes.totalRuns || 0,
+                    "summary.wickets": aggRes.totalWickets || 0,
+                    "summary.overs": Math.floor(totalBalls / 6),
+                    "summary.balls": totalBalls,
+                    recentEvents: recent,
+                    status: "live",
+                }
+            };
+
+            // If wicket, add batsman to dismissed list
+            if (ev.type === "wicket" && ev.batsman) {
+                updateOps.$addToSet = {
+                    [`${updateField}.dismissedBatters`]: ev.batsman
+                };
+            }
+
+            // Update current players if provided in event
+            if (ev.meta?.currentStriker) updateOps.$set["currentBatters.striker"] = ev.meta.currentStriker;
+            if (ev.meta?.currentNonStriker) updateOps.$set["currentBatters.nonStriker"] = ev.meta.currentNonStriker;
+            if (ev.meta?.currentBowler) updateOps.$set["currentBowler"] = ev.meta.currentBowler;
+
             resultMatch = await MatchModel.findByIdAndUpdate(
                 matchId,
-                {
-                    $set: {
-                        "summary.runs": aggRes.totalRuns || 0,
-                        "summary.wickets": aggRes.totalWickets || 0,
-                        "summary.overs": Math.floor(totalBalls / 6),
-                        "summary.balls": totalBalls,
-                        recentEvents: recent,
-                        status: "live",
-                    },
-                },
+                updateOps,
                 { new: true, session: sessionDb }
             ).lean();
         });
-
         // transaction committed
     } catch (err) {
         console.error("Transaction failed, attempting fallback update:", err);
@@ -108,18 +140,42 @@ export async function POST(req: Request, { params }: { params: { id: string } })
             const aggRes = agg[0] || { totalRuns: 0, totalWickets: 0, totalBalls: 0, lastEvents: [] };
             const totalBalls = aggRes.totalBalls || 0;
             const recent = aggRes.lastEvents.slice(-10).reverse();
+            // Determine which innings summary to update
+            const updateField = match.currentInnings === 1 ? "innings1Summary" : "innings2Summary";
+
+            // Prepare update object
+            const updateOps: any = {
+                $set: {
+                    [`${updateField}.runs`]: aggRes.totalRuns || 0,
+                    [`${updateField}.wickets`]: aggRes.totalWickets || 0,
+                    [`${updateField}.overs`]: Math.floor(totalBalls / 6),
+                    [`${updateField}.balls`]: totalBalls,
+                    // Also update legacy summary for compatibility
+                    "summary.runs": aggRes.totalRuns || 0,
+                    "summary.wickets": aggRes.totalWickets || 0,
+                    "summary.overs": Math.floor(totalBalls / 6),
+                    "summary.balls": totalBalls,
+                    recentEvents: recent,
+                    status: "live",
+                }
+            };
+
+            // If wicket, add batsman to dismissed list
+            if (ev.type === "wicket" && ev.batsman) {
+                updateOps.$addToSet = {
+                    [`${updateField}.dismissedBatters`]: ev.batsman
+                };
+                // Clear striker if they got out (logic to be handled by frontend sending next batsman)
+            }
+
+            // Update current players if provided in event (e.g. new batsman selected)
+            if (ev.meta?.currentStriker) updateOps.$set["currentBatters.striker"] = ev.meta.currentStriker;
+            if (ev.meta?.currentNonStriker) updateOps.$set["currentBatters.nonStriker"] = ev.meta.currentNonStriker;
+            if (ev.meta?.currentBowler) updateOps.$set["currentBowler"] = ev.meta.currentBowler;
+
             resultMatch = await MatchModel.findByIdAndUpdate(
                 matchId,
-                {
-                    $set: {
-                        "summary.runs": aggRes.totalRuns || 0,
-                        "summary.wickets": aggRes.totalWickets || 0,
-                        "summary.overs": Math.floor(totalBalls / 6),
-                        "summary.balls": totalBalls,
-                        recentEvents: recent,
-                        status: "live",
-                    },
-                },
+                updateOps,
                 { new: true }
             ).lean();
         } catch (err2) {
