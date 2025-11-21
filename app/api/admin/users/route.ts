@@ -10,7 +10,7 @@ import { z } from "zod";
 const createSchema = z.object({
     email: z.string().email(),
     password: z.string().min(6),
-    role: z.enum(["user", "scorer", "admin"]).optional(),
+    role: z.enum(["user", "scorer", "captain", "vice-captain", "admin"]).optional(),
     name: z.string().optional(),
 });
 
@@ -18,7 +18,7 @@ const updateSchema = z.object({
     id: z.string(),
     email: z.string().email().optional(),
     password: z.string().min(6).optional(),
-    role: z.enum(["user", "scorer", "admin"]).optional(),
+    role: z.enum(["user", "scorer", "captain", "vice-captain", "admin"]).optional(),
     name: z.string().optional(),
 });
 

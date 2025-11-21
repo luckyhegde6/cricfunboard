@@ -14,6 +14,11 @@ async function main() {
         const db = client.db();
         const matches = db.collection("matches");
 
+        const users = db.collection("users");
+        const scorer = await users.findOne({ email: "scorer@test.com" });
+        const captain = await users.findOne({ email: "captain@test.com" });
+        const viceCaptain = await users.findOne({ email: "vice@test.com" });
+
         // Create a dummy match
         const match = {
             name: "Friendly Match",
@@ -23,6 +28,9 @@ async function main() {
             startTime: new Date(),
             status: "scheduled",
             maxOvers: 20,
+            scorerId: scorer?._id,
+            captainId: captain?._id,
+            viceCaptainId: viceCaptain?._id,
             summary: {
                 runs: 0,
                 wickets: 0,

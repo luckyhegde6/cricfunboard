@@ -16,24 +16,33 @@ export default async function MatchesPage() {
   // find a single live match (for scorer view demo)
   const liveMatch = matches.find(m => m.status === "live");
 
-  // get server session so we can check role
+  // get server session so we can check role and id
   const session = await getServerSession(authOptions);
   const role = (session as any)?.user?.role;
+  const userId = (session as any)?.user?.id;
+
+  const isAssigned = liveMatch && (
+    (liveMatch.scorerId && liveMatch.scorerId === userId) ||
+    (liveMatch.captainId && liveMatch.captainId === userId) ||
+    (liveMatch.viceCaptainId && liveMatch.viceCaptainId === userId)
+  );
+
+  const canScore = role === "admin" || isAssigned;
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold">Matches</h1>
 
-      <MatchesTabs matches={matches} />
+      <MatchesTabs matches={matches} userId={userId} />
 
-      {liveMatch && role && (role === "scorer" || role === "admin") && (
+      {liveMatch && canScore && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 space-y-4">
             <MatchTopStats match={liveMatch} />
             {/* optionally more match timeline here */}
           </div>
           <div>
-            <ScorerPanel matchId={liveMatch._id} onUpdate={(data) => console.log("scorer update", data)} />
+            <ScorerPanel matchId={liveMatch._id} />
           </div>
         </div>
       )}

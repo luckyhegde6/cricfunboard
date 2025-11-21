@@ -1,13 +1,12 @@
-// scripts/start-socket-server.ts
+import dotenv from "dotenv";
+// Load environment variables from .env.local BEFORE other imports
+dotenv.config({ path: ".env.local" });
+
 import http from "http";
 import express from "express";
 import { Server } from "socket.io";
 import logger from "../lib/logger";
 import dbConnect from "../lib/db";
-import dotenv from "dotenv";
-
-// Load environment variables from .env.local
-dotenv.config({ path: ".env.local" });
 
 
 const PORT = Number(process.env.PORT_WS || process.env.PORT || 4000);

@@ -14,9 +14,23 @@ const createSchema = z.object({
   startTime: z.string().optional()
 });
 
-export async function GET() {
+export async function GET(req: Request) {
   await dbConnect();
-  const matches = await MatchModel.find().sort({ startTime: -1 }).lean().limit(100).exec();
+
+  const { searchParams } = new URL(req.url);
+  const teamFilter = searchParams.get("team");
+
+  let query = {};
+  if (teamFilter) {
+    query = {
+      $or: [
+        { teamA: teamFilter },
+        { teamB: teamFilter }
+      ]
+    };
+  }
+
+  const matches = await MatchModel.find(query).sort({ startTime: -1 }).lean().limit(100).exec();
   return NextResponse.json(matches);
 }
 

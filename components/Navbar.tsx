@@ -1,11 +1,10 @@
 // components/Navbar.tsx
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import AuthButton from "./AuthButton";
 import { useSession } from "next-auth/react";
-import { useEffect } from "react";
 import LiveScoreBanner from "./LiveScoreBanner";
 
 export default function Navbar() {
@@ -14,6 +13,8 @@ export default function Navbar() {
     const { data: session } = useSession();
     const isAdmin = (session?.user as any)?.role === "admin";
     const [announcement, setAnnouncement] = useState("");
+    const dropdownRef = useRef<HTMLDivElement>(null);
+    const [teams, setTeams] = useState<Array<{ _id: string; name: string }>>([]);
 
     useEffect(() => {
         fetch("/api/admin/settings")
@@ -23,6 +24,32 @@ export default function Navbar() {
             })
             .catch(err => console.error(err));
     }, [pathname]); // Refresh on nav change
+
+    // Fetch teams for dropdown
+    useEffect(() => {
+        fetch("/api/teams")
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) setTeams(data);
+            })
+            .catch(err => console.error("Failed to fetch teams:", err));
+    }, []);
+
+    // Close Teams dropdown when clicking outside
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setOpen(false);
+            }
+        }
+
+        if (open) {
+            document.addEventListener("mousedown", handleClickOutside);
+            return () => {
+                document.removeEventListener("mousedown", handleClickOutside);
+            };
+        }
+    }, [open]);
 
     return (
         <>
@@ -49,7 +76,7 @@ export default function Navbar() {
                                 )}
 
                                 {/* Team dropdown */}
-                                <div className="relative">
+                                <div className="relative" ref={dropdownRef}>
                                     <button
                                         onClick={() => setOpen((s) => !s)}
                                         className="ml-2 px-3 py-1.5 text-sm rounded-md border hover:bg-slate-50"
@@ -58,9 +85,23 @@ export default function Navbar() {
                                     </button>
                                     {open && (
                                         <div className="absolute left-0 mt-2 w-44 bg-white border rounded shadow z-50">
-                                            <Link href="/teams/1" className="block px-3 py-2 hover:bg-slate-50">Team A</Link>
-                                            <Link href="/teams/2" className="block px-3 py-2 hover:bg-slate-50">Team B</Link>
-                                            <Link href="/teams" className="block px-3 py-2 hover:bg-slate-50">All teams</Link>
+                                            {teams.length > 0 ? (
+                                                <>
+                                                    {teams.map((team) => (
+                                                        <Link
+                                                            key={team._id}
+                                                            href={`/teams/${team._id}`}
+                                                            className="block px-3 py-2 hover:bg-slate-50"
+                                                            onClick={() => setOpen(false)}
+                                                        >
+                                                            {team.name}
+                                                        </Link>
+                                                    ))}
+                                                    <Link href="/teams" className="block px-3 py-2 hover:bg-slate-50 border-t" onClick={() => setOpen(false)}>All teams</Link>
+                                                </>
+                                            ) : (
+                                                <div className="px-3 py-2 text-sm text-slate-500">No teams found</div>
+                                            )}
                                         </div>
                                     )}
                                 </div>

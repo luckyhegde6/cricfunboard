@@ -1,19 +1,44 @@
 name: CI
+
 on: [push, pull_request]
+
 jobs:
-  build-and-test:
+  test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node: [20.x]
+    services:
+      mongo:
+        image: mongo:6.0
+        ports: ["27017:27017"]
+        options: >-
+          --health-cmd "mongo --eval 'db.adminCommand(\"ping\")'" 
+          --health-interval 5s --health-timeout 2s --health-retries 5
     steps:
-      - uses: actions/checkout@v4
-      - name: Use Node.js
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
         uses: actions/setup-node@v4
-        with: node-version: ${{ matrix.node }}
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run build
-      - run: npm test
-        - name: Run Playwright tests
-            run: npx playwright test
+        with:
+          node-version: 20
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Start socket server (background)
+        run: node scripts/socket-server.js &
+
+      - name: Run unit tests
+        run: npm run test:unit
+
+      - name: Start Next (build & start)
+        run: |
+          npm run build
+          npm run start &
+
+      - name: Wait for server
+        run: npx wait-on http://localhost:3000
+
+      - name: Run Playwright tests
+        uses: microsoft/playwright-github-action@v1
+        with:
+          run: npx playwright test

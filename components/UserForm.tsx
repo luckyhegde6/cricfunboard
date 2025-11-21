@@ -109,6 +109,8 @@ export default function UserForm({ user, onClose }: { user?: any; onClose: () =>
                             >
                                 <option value="user">User</option>
                                 <option value="scorer">Scorer</option>
+                                <option value="captain">Captain</option>
+                                <option value="vice-captain">Vice Captain</option>
                                 <option value="admin">Admin</option>
                             </select>
                             <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-slate-500">
