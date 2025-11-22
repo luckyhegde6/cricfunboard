@@ -52,94 +52,81 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             createdAt: new Date()
         });
 
-        // Update Match Summary
-        // 1. Runs
-        // The payload 'runs' is the TOTAL runs for this ball (including extras)
-        // But we need to know if it's off the bat or extras for stats, but for match total, just add it.
-        summary.runs += (body.runs || 0);
-
-        // 2. Balls & Overs
-        const isLegal = body.type !== "wd" && body.type !== "nb";
-        if (isLegal) {
-            summary.balls += 1;
+        // Add to recent events
+        if (!match.recentEvents) match.recentEvents = [];
+        match.recentEvents.push({
+            type: body.type,
+            runs: body.runs,
+            batsman: body.batsman || match.currentBatters?.striker,
+            bowler: body.bowler || match.currentBowler,
+            createdAt: new Date(),
+            by: body.by
+        });
+        // Keep last 20 events
+        if (match.recentEvents.length > 20) {
+            match.recentEvents = match.recentEvents.slice(-20);
         }
 
-        // Update overs display (e.g. 0.1, 0.2 ... 0.5, 1.0)
-        // balls = 7 -> 1.1
-        const completedOvers = Math.floor(summary.balls / 6);
-        const ballsInOver = summary.balls % 6;
-        summary.overs = parseFloat(`${completedOvers}.${ballsInOver}`);
+        // Update Match Summary (Skip for announcements)
+        if (body.type !== "announcement") {
+            // 1. Runs
+            summary.runs += (body.runs || 0);
 
-        // 3. Wickets
-        if (body.type === "wicket") {
-            summary.wickets += 1;
-            // Handle Striker Dismissal
-            if (match.currentBatters?.striker) {
-                if (!summary.dismissedBatters) {
-                    summary.dismissedBatters = [];
-                }
-                summary.dismissedBatters.push(match.currentBatters.striker);
-                match.currentBatters.striker = null; // Needs new batter
+            // 2. Balls & Overs
+            const isLegal = body.type !== "wd" && body.type !== "nb";
+            if (isLegal) {
+                summary.balls += 1;
             }
-        }
 
-        // 4. Strike Rotation
-        // Swap if odd runs (and not a boundary? boundaries don't swap even if 3 runs? usually 1,3 swap)
-        // Assuming body.runs is total runs.
-        // If it's a boundary (4 or 6), usually no swap.
-        // If it's 1, 3, 5 runs (ran), swap.
-        // If it's Wide + 1 run (ran) = 2 runs total. They crossed once. Swap.
-        // This is complex. For now, let's assume simple rule: if runs is odd, swap.
-        // EXCEPTION: If it's the last ball of the over, we swap (unless odd runs made us swap already? No, over end swap is additional).
+            // Update overs display (e.g. 0.1, 0.2 ... 0.5, 1.0)
+            const completedOvers = Math.floor(summary.balls / 6);
+            const ballsInOver = summary.balls % 6;
+            summary.overs = parseFloat(`${completedOvers}.${ballsInOver}`);
 
-        // Let's simplify:
-        // If legal ball and end of over (balls % 6 === 0):
-        //    Swap striker/non-striker (End of over change ends)
-        // ELSE If runs is odd:
-        //    Swap striker/non-striker
+            // 3. Wickets
+            if (body.type === "wicket") {
+                summary.wickets += 1;
 
-        // Note: If end of over AND odd runs?
-        // e.g. 1 run on last ball.
-        // 1. Batters cross (odd run).
-        // 2. Over ends. Bowler changes ends.
-        // Result: The batter who WAS at non-striker (now at striker end due to run) stays there?
-        // No, usually:
-        // A (striker) hits 1. A runs to non-striker. B runs to striker.
-        // Over ends.
-        // Next over: New bowler bowls to... B?
-        // Yes, B is at the striker's end.
-        // So if odd runs, they swap.
-        // If over ends, they stay where they are (relative to ends), but the *striker* for the next ball is the one at the batting end.
-        // Since ends change, the one at the non-striker end becomes the striker.
-        // So effectively, over end = swap roles.
+                // Determine which batter was dismissed
+                const dismissedBatterId = body.wicketType === "run-out"
+                    ? (body.dismissedBatter || match.currentBatters?.striker)
+                    : match.currentBatters?.striker;
 
-        // Logic:
-        // 1. Apply Run Swap
-        const isOddRuns = (body.runs || 0) % 2 !== 0;
-        // Wait, boundaries (4, 6) are even/odd but don't swap.
-        // We need to know if they RAN.
-        // Assuming 'runs' includes boundaries.
-        // If runs=4 or 6, don't swap.
-        const isBoundary = body.runs === 4 || body.runs === 6; // Simple check
+                // Handle Striker Dismissal
+                if (dismissedBatterId) {
+                    if (!summary.dismissedBatters) {
+                        summary.dismissedBatters = [];
+                    }
+                    summary.dismissedBatters.push(dismissedBatterId);
 
-        if (isOddRuns && !isBoundary) {
-            // Swap
-            const temp = match.currentBatters.striker;
-            match.currentBatters.striker = match.currentBatters.nonStriker;
-            match.currentBatters.nonStriker = temp;
-        }
+                    // Clear the dismissed batter from currentBatters
+                    if (match.currentBatters?.striker === dismissedBatterId) {
+                        match.currentBatters.striker = null; // Needs new batter
+                    } else if (match.currentBatters?.nonStriker === dismissedBatterId) {
+                        match.currentBatters.nonStriker = null; // Needs new batter
+                    }
+                }
+            }
 
-        // 2. Apply Over End Swap
-        if (isLegal && summary.balls % 6 === 0) {
-            // End of over.
-            // Swap striker and non-striker
-            const temp = match.currentBatters.striker;
-            match.currentBatters.striker = match.currentBatters.nonStriker;
-            match.currentBatters.nonStriker = temp;
+            // 4. Strike Rotation
+            const isOddRuns = (body.runs || 0) % 2 !== 0;
+            const isBoundary = body.runs === 4 || body.runs === 6;
 
-            // Also unset bowler? Or keep until changed?
-            // Usually prompt for new bowler.
-            match.currentBowler = null;
+            if (isOddRuns && !isBoundary) {
+                // Swap
+                const temp = match.currentBatters.striker;
+                match.currentBatters.striker = match.currentBatters.nonStriker;
+                match.currentBatters.nonStriker = temp;
+            }
+
+            // 2. Apply Over End Swap
+            if (isLegal && summary.balls % 6 === 0) {
+                // End of over.
+                const temp = match.currentBatters.striker;
+                match.currentBatters.striker = match.currentBatters.nonStriker;
+                match.currentBatters.nonStriker = temp;
+                match.currentBowler = null;
+            }
         }
 
         // Save

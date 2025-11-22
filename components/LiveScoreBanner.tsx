@@ -7,11 +7,25 @@ type MatchSummary = {
     _id: string;
     teamA: string;
     teamB: string;
-    summary: {
+    currentInnings: number;
+    battingTeam: string;
+    innings1Summary?: {
         runs: number;
         wickets: number;
         overs: number;
     };
+    innings2Summary?: {
+        runs: number;
+        wickets: number;
+        overs: number;
+    };
+    currentBatters?: {
+        striker: string;
+        nonStriker: string;
+    };
+    currentBowler?: string;
+    teamAPlayers?: any[];
+    teamBPlayers?: any[];
 };
 
 export default function LiveScoreBanner() {
@@ -68,14 +82,41 @@ export default function LiveScoreBanner() {
 
     if (!match) return null;
 
+    // Get current innings summary
+    const currentSummary = match.currentInnings === 1 ? match.innings1Summary : match.innings2Summary;
+    const score = `${currentSummary?.runs || 0}/${currentSummary?.wickets || 0}`;
+    const overs = currentSummary?.overs || 0;
+
+    // Get player names
+    const allPlayers = [...(match.teamAPlayers || []), ...(match.teamBPlayers || [])];
+    const getPlayerName = (id: string) => {
+        const player = allPlayers.find((p: any) => p.playerId === id);
+        return player?.name || id;
+    };
+
+    const strikerName = match.currentBatters?.striker ? getPlayerName(match.currentBatters.striker) : null;
+    const nonStrikerName = match.currentBatters?.nonStriker ? getPlayerName(match.currentBatters.nonStriker) : null;
+    const bowlerName = match.currentBowler ? getPlayerName(match.currentBowler) : null;
+
     return (
         <div className="bg-indigo-600 text-white text-sm py-2 px-4 text-center transition-all duration-500">
-            <Link href={`/match/${match._id}`} className="hover:underline font-medium flex items-center justify-center gap-2">
+            <Link href={`/match/${match._id}`} className="hover:underline font-medium flex items-center justify-center gap-3 flex-wrap">
                 <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
                 </span>
-                LIVE: {match.teamA} vs {match.teamB} — {match.summary?.runs || 0}/{match.summary?.wickets || 0} ({match.summary?.overs || 0} ov)
+                <span className="font-bold">LIVE:</span>
+                <span>{match.teamA} vs {match.teamB}</span>
+                <span className="text-white/80">—</span>
+                <span className="font-semibold">{match.battingTeam}: {score} ({overs} ov)</span>
+                {strikerName && bowlerName && (
+                    <>
+                        <span className="text-white/80">•</span>
+                        <span className="text-xs opacity-90">
+                            {strikerName}* {nonStrikerName && `& ${nonStrikerName}`} | {bowlerName} bowling
+                        </span>
+                    </>
+                )}
             </Link>
         </div>
     );

@@ -51,6 +51,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         match.battingTeam = match.bowlingTeam;
         match.bowlingTeam = temp;
 
+        // Clear current batters and bowler for new innings
+        match.currentBatters = { striker: null, nonStriker: null };
+        match.currentBowler = null;
+
         match.updatedAt = new Date();
         await match.save();
 

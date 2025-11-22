@@ -6,12 +6,41 @@ type MatchControlsProps = {
     matchId: string;
     matchState: string;
     currentInnings: number;
-    onAction: () => void;
+    onAction?: () => void;
 };
 
 export default function MatchControls({ matchId, matchState, currentInnings, onAction }: MatchControlsProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [announcementText, setAnnouncementText] = useState("");
+
+    const handleSendAnnouncement = async () => {
+        if (!announcementText.trim()) return;
+
+        setLoading(true);
+        setError("");
+        try {
+            const res = await fetch(`/api/matches/${matchId}/events`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    type: "announcement",
+                    runs: 0,
+                    meta: { text: announcementText }
+                })
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Failed to send announcement");
+
+            setAnnouncementText("");
+            if (onAction) onAction();
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleAction = async (endpoint: string, body?: any) => {
         setLoading(true);
@@ -30,7 +59,7 @@ export default function MatchControls({ matchId, matchState, currentInnings, onA
                 throw new Error(data.error || `Failed to ${endpoint}`);
             }
 
-            onAction();
+            if (onAction) onAction();
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -135,6 +164,29 @@ export default function MatchControls({ matchId, matchState, currentInnings, onA
                         Substitute
                     </button>
                 )}
+            </div>
+
+            {/* Announcements Section */}
+            <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
+                <h4 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">Broadcast Announcement</h4>
+                <div className="flex gap-2">
+                    <input
+                        type="text"
+                        value={announcementText}
+                        onChange={(e) => setAnnouncementText(e.target.value)}
+                        placeholder="Type message (e.g. 'Rain Delay', 'Lunch Break')..."
+                        className="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                        onKeyDown={(e) => e.key === "Enter" && handleSendAnnouncement()}
+                    />
+                    <button
+                        onClick={handleSendAnnouncement}
+                        disabled={loading || !announcementText.trim()}
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white text-sm font-medium rounded-md transition-colors flex items-center gap-2"
+                    >
+                        <span>Send</span>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+                    </button>
+                </div>
             </div>
         </div>
     );

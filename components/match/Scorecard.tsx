@@ -21,11 +21,27 @@ type ScorecardProps = {
 };
 
 export default function Scorecard({ match, players }: ScorecardProps) {
-    const [activeTab, setActiveTab] = useState(1);
+    // Auto-select current innings tab
+    const [activeTab, setActiveTab] = useState(match.currentInnings || 1);
     const scorecard = match.scorecard || { innings1: { batting: {}, bowling: {} }, innings2: { batting: {}, bowling: {} } };
 
+    // Update activeTab when match.currentInnings changes
+    React.useEffect(() => {
+        if (match.currentInnings) {
+            setActiveTab(match.currentInnings);
+        }
+    }, [match.currentInnings]);
+
     const currentInningsData = activeTab === 1 ? scorecard.innings1 : scorecard.innings2;
-    const teamName = activeTab === 1 ? match.teamA : match.teamB; // Assuming Team A bats first for now, logic needs check
+
+    // Determine which team is batting in each innings
+    // Innings 1: battingFirst team, Innings 2: the other team
+    const battingFirst = match.toss?.winner === match.teamA
+        ? (match.toss?.decision === "bat" ? match.teamA : match.teamB)
+        : (match.toss?.decision === "bat" ? match.teamB : match.teamA);
+
+    const innings1Team = battingFirst || match.teamA;
+    const innings2Team = battingFirst === match.teamA ? match.teamB : match.teamA;
 
     const getPlayerName = (id: string) => players.find(p => p.playerId === id)?.name || id;
 
@@ -35,15 +51,25 @@ export default function Scorecard({ match, players }: ScorecardProps) {
             <div className="flex border-b border-slate-200 dark:border-slate-700">
                 <button
                     onClick={() => setActiveTab(1)}
-                    className={`flex-1 py-3 text-sm font-medium ${activeTab === 1 ? 'text-blue-600 border-b-2 border-blue-600 dark:text-blue-400' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
+                    className={`flex-1 py-3 text-sm font-medium relative ${activeTab === 1 ? 'text-blue-600 border-b-2 border-blue-600 dark:text-blue-400' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
                 >
-                    Innings 1
+                    <div className="flex items-center justify-center gap-2">
+                        <span>Innings 1 ({innings1Team})</span>
+                        {match.currentInnings === 1 && match.status === 'live' && (
+                            <span className="px-2 py-0.5 bg-red-500 text-white text-xs font-bold rounded">LIVE</span>
+                        )}
+                    </div>
                 </button>
                 <button
                     onClick={() => setActiveTab(2)}
-                    className={`flex-1 py-3 text-sm font-medium ${activeTab === 2 ? 'text-blue-600 border-b-2 border-blue-600 dark:text-blue-400' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
+                    className={`flex-1 py-3 text-sm font-medium relative ${activeTab === 2 ? 'text-blue-600 border-b-2 border-blue-600 dark:text-blue-400' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
                 >
-                    Innings 2
+                    <div className="flex items-center justify-center gap-2">
+                        <span>Innings 2 ({innings2Team})</span>
+                        {match.currentInnings === 2 && match.status === 'live' && (
+                            <span className="px-2 py-0.5 bg-red-500 text-white text-xs font-bold rounded">LIVE</span>
+                        )}
+                    </div>
                 </button>
             </div>
 

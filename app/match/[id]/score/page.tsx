@@ -12,6 +12,7 @@ import { ArrowLeft } from "lucide-react";
 import { getSocket } from "@/lib/socket-client";
 import SelectBatsmanModal from "@/components/scorer/SelectBatsmanModal";
 import SelectBowlerModal from "@/components/scorer/SelectBowlerModal";
+import SelectDismissedBatterModal from "@/components/scorer/SelectDismissedBatterModal";
 
 type Match = {
     _id: string;
@@ -63,6 +64,8 @@ export default function ScorePage({ params }: { params: Promise<{ id: string }> 
     const [showBatsmanModal, setShowBatsmanModal] = useState(false);
     const [showBowlerModal, setShowBowlerModal] = useState(false);
     const [batsmanRole, setBatsmanRole] = useState<"striker" | "nonStriker">("striker");
+    const [showRunOutModal, setShowRunOutModal] = useState(false);
+    const [pendingPayload, setPendingPayload] = useState<any>(null);
 
     const { data: session, status } = useSession();
     const router = useRouter();
@@ -323,6 +326,14 @@ export default function ScorePage({ params }: { params: Promise<{ id: string }> 
                 bowler: (match as any).currentBowler
             };
 
+            // If it's a run-out, show modal to select dismissed batter
+            if (payload.type === "wicket" && payload.wicketType === "run-out") {
+                setPendingPayload(enrichedPayload);
+                setShowRunOutModal(true);
+                return;
+            }
+
+            // Submit immediately for non-run-out events
             const res = await fetch(`/api/matches/${id}/events`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -336,6 +347,36 @@ export default function ScorePage({ params }: { params: Promise<{ id: string }> 
 
             // Refresh match data (Socket will also trigger this, but double tap is fine or we can rely on socket)
             // fetchMatch(); 
+        } catch (err: any) {
+            console.error("Error submitting score:", err);
+            alert(err.message || "Failed to submit score. Please try again.");
+        }
+    };
+
+    const handleRunOutDismissal = async (dismissedBatterId: string) => {
+        if (!pendingPayload) return;
+
+        try {
+            // Add the dismissed batter to the payload
+            const finalPayload = {
+                ...pendingPayload,
+                dismissedBatter: dismissedBatterId
+            };
+
+            const res = await fetch(`/api/matches/${id}/events`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(finalPayload)
+            });
+
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(`Failed to submit score: ${res.status} ${text}`);
+            }
+
+            // Close modal and clear pending payload
+            setShowRunOutModal(false);
+            setPendingPayload(null);
         } catch (err: any) {
             console.error("Error submitting score:", err);
             alert(err.message || "Failed to submit score. Please try again.");
@@ -460,6 +501,31 @@ export default function ScorePage({ params }: { params: Promise<{ id: string }> 
                 onClose={() => { }} // Force selection
                 onSubmit={handleBowlerSelect}
                 players={availableBowlers}
+            />
+
+            <SelectDismissedBatterModal
+                isOpen={showRunOutModal}
+                onClose={() => {
+                    setShowRunOutModal(false);
+                    setPendingPayload(null);
+                }}
+                onSubmit={handleRunOutDismissal}
+                striker={
+                    currentStriker
+                        ? {
+                            id: currentStriker,
+                            name: allPlayers.find((p: any) => p.playerId === currentStriker)?.name || currentStriker
+                        }
+                        : null
+                }
+                nonStriker={
+                    currentNonStriker
+                        ? {
+                            id: currentNonStriker,
+                            name: allPlayers.find((p: any) => p.playerId === currentNonStriker)?.name || currentNonStriker
+                        }
+                        : null
+                }
             />
         </div>
     );
