@@ -127,7 +127,7 @@ export default function MatchTopStats({ match: initialMatch, teamAPlayers, teamB
                     {lastOver.length > 0 && (
                         <div className="flex flex-col items-end gap-2">
                             <span className="text-xs text-slate-400 font-medium">This Over</span>
-                            <div className="flex justify-end gap-1.5 flex-wrap">
+                            <div className="flex justify-end gap-1.5 flex-wrap" data-testid="recent-balls">
                                 {lastOver.map((ball: string, idx: number) => (
                                     <span
                                         key={idx}
