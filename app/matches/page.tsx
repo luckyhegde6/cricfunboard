@@ -1,9 +1,11 @@
 // app/matches/page.tsx
 import MatchesTabs, { MatchType } from "@/components/MatchesTabs";
 import MatchTopStats from "@/components/MatchTopStats";
-import ScorerPanel from "@/components/ScorerPanel";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import MatchControls from "@/components/scorer/MatchControls";
+import dbConnect from "@/lib/db";
+import Team from "@/models/Team";
 
 async function fetchMatches(): Promise<MatchType[]> {
   const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ""}/api/matches`, { cache: "no-store" });
@@ -29,6 +31,20 @@ export default async function MatchesPage() {
 
   const canScore = role === "admin" || isAssigned;
 
+  let teamAPlayers = [];
+  let teamBPlayers = [];
+
+  if (liveMatch) {
+    await dbConnect();
+    const [tA, tB] = await Promise.all([
+      Team.findOne({ name: liveMatch.teamA }).lean(),
+      Team.findOne({ name: liveMatch.teamB }).lean()
+    ]);
+    // Serialize to ensure no pass-by-reference or ObjectId issues across boundary
+    teamAPlayers = JSON.parse(JSON.stringify(tA?.players || []));
+    teamBPlayers = JSON.parse(JSON.stringify(tB?.players || []));
+  }
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold">Matches</h1>
@@ -36,13 +52,21 @@ export default async function MatchesPage() {
       <MatchesTabs matches={matches} userId={userId} />
 
       {liveMatch && canScore && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2 space-y-4">
-            <MatchTopStats match={liveMatch} />
-            {/* optionally more match timeline here */}
-          </div>
-          <div>
-            <ScorerPanel matchId={liveMatch._id} />
+        <div className="grid grid-cols-1 gap-4">
+          <div className="w-full">
+            <MatchTopStats
+              match={liveMatch}
+              teamAPlayers={teamAPlayers}
+              teamBPlayers={teamBPlayers}
+            />
+
+            <div className="mt-4">
+              <MatchControls
+                matchId={liveMatch._id}
+                matchState={liveMatch.status}
+                currentInnings={liveMatch.currentInnings}
+              />
+            </div>
           </div>
         </div>
       )}

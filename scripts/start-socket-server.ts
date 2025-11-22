@@ -31,17 +31,32 @@ async function main() {
   io.on("connection", (socket) => {
     logger.info({ id: socket.id }, "Socket connected");
 
-    socket.on("join", (payload: { matchId: string }) => {
-      const room = `match:${payload.matchId}`;
-      socket.join(room);
-      logger.debug({ socket: socket.id, room }, "joined room");
-      // Optionally: emit current match summary from DB here
+    socket.on("join", (roomOrPayload: string | { matchId: string }) => {
+      let room = "";
+      if (typeof roomOrPayload === "string") {
+        room = roomOrPayload;
+      } else if (roomOrPayload?.matchId) {
+        room = `match:${roomOrPayload.matchId}`;
+      }
+
+      if (room) {
+        socket.join(room);
+        logger.debug({ socket: socket.id, room }, "joined room");
+      }
     });
 
-    socket.on("leave", (payload: { matchId: string }) => {
-      const room = `match:${payload.matchId}`;
-      socket.leave(room);
-      logger.debug({ socket: socket.id, room }, "left room");
+    socket.on("leave", (roomOrPayload: string | { matchId: string }) => {
+      let room = "";
+      if (typeof roomOrPayload === "string") {
+        room = roomOrPayload;
+      } else if (roomOrPayload?.matchId) {
+        room = `match:${roomOrPayload.matchId}`;
+      }
+
+      if (room) {
+        socket.leave(room);
+        logger.debug({ socket: socket.id, room }, "left room");
+      }
     });
 
     socket.on("disconnect", (reason) => {
@@ -49,8 +64,18 @@ async function main() {
     });
   });
 
-  // Example helper route to broadcast a test update
   app.use(express.json());
+
+  // Broadcast endpoint used by Next.js API routes
+  app.post("/broadcast", (req, res) => {
+    const { room, event, payload } = req.body;
+    if (!room || !event) return res.status(400).json({ error: "room & event required" });
+
+    io.to(room).emit(event, payload);
+    return res.json({ ok: true });
+  });
+
+  // Example helper route to broadcast a test update
   app.post("/emit/test", (req, res) => {
     const { matchId, payload } = req.body;
     if (!matchId) return res.status(400).json({ error: "matchId required" });

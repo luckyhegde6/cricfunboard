@@ -42,11 +42,33 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
 
     // Check if match already started
-    if (match.status === "live" || match.matchState === "live") {
+    // Allow if matchState is 'innings-break' (resuming for 2nd innings)
+    if ((match.status === "live" || match.matchState === "live") && match.matchState !== "innings-break") {
         return NextResponse.json({ error: "Match already started" }, { status: 400 });
     }
 
-    // Start the match
+    // If resuming from innings break
+    if (match.matchState === "innings-break") {
+        match.matchState = "live";
+
+        // Safety: Clear batters/bowler to ensure UI prompts for selection
+        // This fixes cases where end-innings didn't clear them (legacy bug)
+        match.currentBatters = { striker: null, nonStriker: null };
+        match.currentBowler = null;
+
+        match.updatedAt = new Date();
+        await match.save();
+
+        return NextResponse.json({
+            success: true,
+            status: match.status,
+            matchState: match.matchState,
+            teamsLocked: match.teamsLocked,
+            currentInnings: match.currentInnings
+        });
+    }
+
+    // Start the match (Innings 1)
     match.status = "live";
     match.matchState = "live";
     match.teamsLocked = true;
