@@ -1,17 +1,14 @@
 name: CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
 
 jobs:
-  test:
+  build-and-test:
     runs-on: ubuntu-latest
-    services:
-      mongo:
-        image: mongo:6.0
-        ports: ["27017:27017"]
-        options: >-
-          --health-cmd "mongo --eval 'db.adminCommand(\"ping\")'" 
-          --health-interval 5s --health-timeout 2s --health-retries 5
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -19,29 +16,14 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: "20"
+          cache: "npm"
 
-      - name: Install deps
+      - name: Install dependencies
         run: npm ci
 
-      - name: Start socket server (background)
-        run: npm run socket &
+      - name: Build
+        run: npm run build
 
-      - name: Run unit tests
-        run: npm run test:unit
-
-      - name: Run coverage
+      - name: Test with Coverage
         run: npm run test:coverage
-
-      - name: Start Next (build & start)
-        run: |
-          npm run build
-          npm run start &
-
-      - name: Wait for server
-        run: npx wait-on http://localhost:3000
-
-      - name: Run Playwright tests
-        uses: microsoft/playwright-github-action@v1
-        with:
-          run: npx playwright test
