@@ -2,10 +2,13 @@
 import mongoose from "mongoose";
 import logger from "./logger";
 
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/cricket";
+const MONGODB_URI =
+  process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/cricket";
 
 if (!MONGODB_URI) {
-  throw new Error("Please define the MONGODB_URI environment variable inside .env.local");
+  throw new Error(
+    "Please define the MONGODB_URI environment variable inside .env.local",
+  );
 }
 
 /**
@@ -21,7 +24,10 @@ const globalWithMongoose = globalThis as unknown as {
   _mongoose?: CachedConn;
 };
 
-let cached: CachedConn = globalWithMongoose._mongoose || { conn: null, promise: null };
+let cached: CachedConn = globalWithMongoose._mongoose || {
+  conn: null,
+  promise: null,
+};
 
 async function dbConnect(): Promise<typeof mongoose> {
   if (cached.conn) {

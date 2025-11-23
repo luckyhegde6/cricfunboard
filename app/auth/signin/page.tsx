@@ -1,6 +1,6 @@
 // app/auth/signin/page.tsx
+
 import SignInForm from "@/components/SignInForm";
-import React from "react";
 
 export const metadata = { title: "Sign in" };
 

@@ -1,8 +1,9 @@
 // app/admin/page.tsx
-import AdminSidebar from "@/components/AdminSidebar";
-import UsersList from "@/components/UsersList";
+
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import AdminSidebar from "@/components/AdminSidebar";
+import UsersList from "@/components/UsersList";
 
 export default async function AdminPage() {
   const session = await getServerSession(authOptions);

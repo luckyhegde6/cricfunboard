@@ -5,7 +5,6 @@ const { Server } = require("socket.io");
 const cors = require("cors");
 require("dotenv").config({ path: ".env.local" });
 
-
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -41,7 +40,8 @@ io.on("connection", (socket) => {
 // Admin endpoint to broadcast requested events (used by server route)
 app.post("/broadcast", (req, res) => {
   const { room, event, payload } = req.body || {};
-  if (!room || !event) return res.status(400).json({ error: "room & event required" });
+  if (!room || !event)
+    return res.status(400).json({ error: "room & event required" });
   io.to(room).emit(event, payload);
   return res.json({ ok: true });
 });

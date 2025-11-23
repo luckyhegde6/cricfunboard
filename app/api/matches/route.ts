@@ -1,17 +1,17 @@
 // app/api/matches/route.ts
 import { NextResponse } from "next/server";
-import dbConnect from "@/lib/db";
-import MatchModel from "@/models/Match";
-import { z } from "zod";
 import { getServerSession } from "next-auth";
+import { z } from "zod";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { ensureHasRole } from "@/lib/auth";
+import dbConnect from "@/lib/db";
+import MatchModel from "@/models/Match";
 
 const createSchema = z.object({
   teamA: z.string().min(1),
   teamB: z.string().min(1),
   venue: z.string().optional(),
-  startTime: z.string().optional()
+  startTime: z.string().optional(),
 });
 
 export async function GET(req: Request) {
@@ -23,14 +23,15 @@ export async function GET(req: Request) {
   let query = {};
   if (teamFilter) {
     query = {
-      $or: [
-        { teamA: teamFilter },
-        { teamB: teamFilter }
-      ]
+      $or: [{ teamA: teamFilter }, { teamB: teamFilter }],
     };
   }
 
-  const matches = await MatchModel.find(query).sort({ startTime: -1 }).lean().limit(100).exec();
+  const matches = await MatchModel.find(query)
+    .sort({ startTime: -1 })
+    .lean()
+    .limit(100)
+    .exec();
   return NextResponse.json(matches);
 }
 
@@ -42,22 +43,30 @@ export async function POST(req: Request) {
   try {
     ensureHasRole(session, ["admin"]);
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: err.status || 403 });
+    return NextResponse.json(
+      { error: err.message },
+      { status: err.status || 403 },
+    );
   }
 
   const body = await req.json();
   const parsed = createSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    return NextResponse.json(
+      { error: parsed.error.flatten() },
+      { status: 400 },
+    );
   }
 
   const doc = await MatchModel.create({
     teamA: parsed.data.teamA,
     teamB: parsed.data.teamB,
     venue: parsed.data.venue ?? "",
-    startTime: parsed.data.startTime ? new Date(parsed.data.startTime) : undefined,
+    startTime: parsed.data.startTime
+      ? new Date(parsed.data.startTime)
+      : undefined,
     status: "scheduled",
-    summary: { runs: 0, wickets: 0, overs: 0 }
+    summary: { runs: 0, wickets: 0, overs: 0 },
   });
 
   return NextResponse.json(doc, { status: 201 });

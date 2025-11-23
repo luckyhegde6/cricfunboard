@@ -1,12 +1,10 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import MatchDetails from "@/components/MatchDetails";
-import TeamPlayers from "@/components/TeamPlayers";
-import ScorerAssignment from "@/components/admin/ScorerAssignment";
-import MatchStatus from "@/components/scorer/MatchStatus";
+import { useSession } from "next-auth/react";
+import React, { useEffect, useState } from "react";
 import Scorecard from "@/components/match/Scorecard";
+import MatchStatus from "@/components/scorer/MatchStatus";
+import TeamPlayers from "@/components/TeamPlayers";
 import { getSocket } from "@/lib/socket-client";
 
 type Player = {
@@ -56,7 +54,11 @@ type Match = {
   currentBowler?: any;
 };
 
-export default function MatchPage({ params }: { params: Promise<{ id: string }> }) {
+export default function MatchPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = React.use(params);
   const [match, setMatch] = useState<Match | null>(null);
   const [loading, setLoading] = useState(true);
@@ -73,11 +75,11 @@ export default function MatchPage({ params }: { params: Promise<{ id: string }> 
         }
         return r.json();
       })
-      .then(data => {
+      .then((data) => {
         setMatch(data);
         setLoading(false);
       })
-      .catch(err => {
+      .catch((err) => {
         console.error("Failed to fetch match:", err);
         setLoading(false);
       });
@@ -91,7 +93,7 @@ export default function MatchPage({ params }: { params: Promise<{ id: string }> 
     socket.emit("join", `match:${id}`);
     console.log(`[MatchPage] Joined socket room: match:${id}`);
 
-    const handleUpdate = (payload: any) => {
+    const handleUpdate = (_payload: any) => {
       console.log("[MatchPage] Received match update via socket");
       fetchMatch();
     };
@@ -102,18 +104,20 @@ export default function MatchPage({ params }: { params: Promise<{ id: string }> 
       socket.off("match:update", handleUpdate);
       socket.emit("leave", `match:${id}`);
     };
-  }, [id]);
+  }, [id, fetchMatch]);
 
   useEffect(() => {
     fetchMatch();
-  }, [id]);
+  }, [fetchMatch]);
 
   if (loading) {
     return (
       <div className="p-6 flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900 dark:border-white mx-auto"></div>
-          <p className="mt-4 text-slate-600 dark:text-slate-400">Loading match details...</p>
+          <p className="mt-4 text-slate-600 dark:text-slate-400">
+            Loading match details...
+          </p>
         </div>
       </div>
     );
@@ -123,16 +127,22 @@ export default function MatchPage({ params }: { params: Promise<{ id: string }> 
     return (
       <div className="p-6">
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-          <h2 className="text-xl font-bold text-red-800 dark:text-red-300">Match Not Found</h2>
-          <p className="mt-2 text-red-600 dark:text-red-400">The match you're looking for doesn't exist.</p>
+          <h2 className="text-xl font-bold text-red-800 dark:text-red-300">
+            Match Not Found
+          </h2>
+          <p className="mt-2 text-red-600 dark:text-red-400">
+            The match you're looking for doesn't exist.
+          </p>
         </div>
       </div>
     );
   }
 
-  const isCompleted = match.status === "completed" || match.status === "abandoned";
-  const isAssignedScorer = match.scorerId?.toString() === session?.user?.id;
-  const canScore = session?.user?.role === "admin" || isAssignedScorer;
+  const isCompleted =
+    match.status === "completed" || match.status === "abandoned";
+  const isAssignedScorer =
+    match.scorerId?.toString() === (session?.user as any)?.id;
+  const canScore = (session?.user as any)?.role === "admin" || isAssignedScorer;
   const canAccessScorer = canScore && !isCompleted;
 
   const allPlayers = [...match.teamAPlayers, ...match.teamBPlayers];
@@ -165,13 +175,13 @@ export default function MatchPage({ params }: { params: Promise<{ id: string }> 
           <div className="flex space-x-6 mt-2">
             <button
               onClick={() => setActiveTab("info")}
-              className={`pb-3 text-sm font-medium border-b-2 transition-colors ${activeTab === "info" ? 'border-blue-600 text-blue-600 dark:text-blue-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
+              className={`pb-3 text-sm font-medium border-b-2 transition-colors ${activeTab === "info" ? "border-blue-600 text-blue-600 dark:text-blue-400" : "border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400"}`}
             >
               Info
             </button>
             <button
               onClick={() => setActiveTab("scorecard")}
-              className={`pb-3 text-sm font-medium border-b-2 transition-colors ${activeTab === "scorecard" ? 'border-blue-600 text-blue-600 dark:text-blue-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
+              className={`pb-3 text-sm font-medium border-b-2 transition-colors ${activeTab === "scorecard" ? "border-blue-600 text-blue-600 dark:text-blue-400" : "border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400"}`}
             >
               Scorecard
             </button>

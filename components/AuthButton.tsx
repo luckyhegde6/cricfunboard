@@ -1,8 +1,8 @@
 // components/AuthButton.tsx
 "use client";
-import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
-import { useState, useEffect, useRef } from "react";
+import { signOut, useSession } from "next-auth/react";
+import { useEffect, useRef, useState } from "react";
 
 export default function AuthButton() {
   const { data: session, status } = useSession();
@@ -13,7 +13,10 @@ export default function AuthButton() {
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setOpen(false);
       }
     }
@@ -32,7 +35,10 @@ export default function AuthButton() {
 
   if (!session) {
     return (
-      <Link href="/auth/signin" className="px-3 py-1.5 bg-slate-800 text-white rounded-md text-sm shadow-sm hover:bg-slate-900">
+      <Link
+        href="/auth/signin"
+        className="px-3 py-1.5 bg-slate-800 text-white rounded-md text-sm shadow-sm hover:bg-slate-900"
+      >
         Sign in
       </Link>
     );
@@ -49,16 +55,35 @@ export default function AuthButton() {
         <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-200 text-slate-700">
           {(session.user?.email || "U").charAt(0).toUpperCase()}
         </span>
-        <span className="hidden sm:block text-sm">{session.user?.email?.split("@")[0]}</span>
+        <span className="hidden sm:block text-sm">
+          {session.user?.email?.split("@")[0]}
+        </span>
       </button>
 
       {open && (
         <div className="absolute right-0 mt-2 w-44 bg-white border rounded shadow-lg py-2 text-sm z-50">
-          <Link href="/profile" className="block px-3 py-2 hover:bg-slate-50" onClick={() => setOpen(false)}>Profile</Link>
+          <Link
+            href="/profile"
+            className="block px-3 py-2 hover:bg-slate-50"
+            onClick={() => setOpen(false)}
+          >
+            Profile
+          </Link>
           {isAdmin && (
-            <Link href="/admin" className="block px-3 py-2 hover:bg-slate-50" onClick={() => setOpen(false)}>Admin</Link>
+            <Link
+              href="/admin"
+              className="block px-3 py-2 hover:bg-slate-50"
+              onClick={() => setOpen(false)}
+            >
+              Admin
+            </Link>
           )}
-          <button onClick={() => signOut({ callbackUrl: "/" })} className="w-full text-left px-3 py-2 hover:bg-slate-50">Sign out</button>
+          <button
+            onClick={() => signOut({ callbackUrl: "/" })}
+            className="w-full text-left px-3 py-2 hover:bg-slate-50"
+          >
+            Sign out
+          </button>
         </div>
       )}
     </div>

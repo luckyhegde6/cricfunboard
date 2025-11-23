@@ -8,7 +8,6 @@ import { Server } from "socket.io";
 import logger from "../lib/logger";
 import dbConnect from "../lib/db";
 
-
 const PORT = Number(process.env.PORT_WS || process.env.PORT || 4000);
 
 async function main() {
@@ -69,7 +68,8 @@ async function main() {
   // Broadcast endpoint used by Next.js API routes
   app.post("/broadcast", (req, res) => {
     const { room, event, payload } = req.body;
-    if (!room || !event) return res.status(400).json({ error: "room & event required" });
+    if (!room || !event)
+      return res.status(400).json({ error: "room & event required" });
 
     io.to(room).emit(event, payload);
     return res.json({ ok: true });
