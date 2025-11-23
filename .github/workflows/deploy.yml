@@ -1,3 +1,15 @@
+name: Deploy to GitHub Pages
+
+on:
+    push:
+        branches: ["main"]
+    workflow_dispatch:
+
+permissions:
+    contents: read
+    pages: write
+    id-token: write
+
 concurrency:
     group: "pages"
     cancel-in-progress: false
@@ -5,6 +17,11 @@ concurrency:
 jobs:
     build:
         runs-on: ubuntu-latest
+        services:
+            mongodb:
+                image: mongo:latest
+                ports:
+                    - 27017:27017
         env:
             MONGODB_URI: "mongodb://127.0.0.1:27017/test"
             NEXTAUTH_SECRET: "dummy-secret-for-build"
