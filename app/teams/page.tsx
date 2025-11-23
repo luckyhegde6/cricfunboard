@@ -1,8 +1,6 @@
 // app/teams/page.tsx
 import TeamCard from "@/components/TeamCard";
 
-export const dynamic = "force-dynamic";
-
 async function fetchTeams() {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
