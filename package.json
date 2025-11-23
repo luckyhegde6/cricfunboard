@@ -64,7 +64,7 @@
     "jest-environment-jsdom": "^30.2.0",
     "jsdom": "^27.2.0",
     "mongodb-memory-server": "^10.3.0",
-    "msw": "^2.12.2",
+    "msw": "^2.12.3",
     "pino-pretty": "^13.1.2",
     "playwright": "^1.56.1",
     "prettier": "^3.6.2",
