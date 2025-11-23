@@ -13,13 +13,12 @@
  * It is idempotent: if user exists, it updates role to "admin" and optionally updates password.
  */
 
-import { MongoClient } from "mongodb";
 import bcrypt from "bcrypt";
 import dotenv from "dotenv";
+import { MongoClient } from "mongodb";
 
 // Load environment variables from .env.local
 dotenv.config({ path: ".env.local" });
-
 
 async function main() {
   const uri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/cricket";
@@ -42,10 +41,12 @@ async function main() {
     const passwordHash = await bcrypt.hash(password, 10);
 
     if (existing) {
-      console.log("User exists — updating role to admin and password hash (if changed).");
+      console.log(
+        "User exists — updating role to admin and password hash (if changed).",
+      );
       await users.updateOne(
         { _id: existing._id },
-        { $set: { role: "admin", passwordHash } }
+        { $set: { role: "admin", passwordHash } },
       );
       console.log("Updated existing user:", email);
     } else {

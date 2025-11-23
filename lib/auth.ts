@@ -1,6 +1,7 @@
 // lib/auth.ts
-import type { JWT } from "next-auth/jwt";
+
 import type { Session } from "next-auth";
+import type { JWT } from "next-auth/jwt";
 import logger from "./logger";
 
 /** Minimal types for session.user we expect */
@@ -10,7 +11,9 @@ export type AppUser = {
   role?: "admin" | "scorer" | "user" | string;
 };
 
-export function extractRoleFromSession(session?: Session | null | undefined | { user?: AppUser }) {
+export function extractRoleFromSession(
+  session?: Session | null | undefined | { user?: AppUser },
+) {
   // NextAuth typically stores role in session.user.role if you've set it in callbacks
   try {
     const user = (session as any)?.user as AppUser | undefined;
@@ -22,7 +25,10 @@ export function extractRoleFromSession(session?: Session | null | undefined | { 
 }
 
 /** Simple role check. Use in route handlers before sensitive operations. */
-export function hasRole(session: Session | null | undefined, allowed: string[] = []) {
+export function hasRole(
+  session: Session | null | undefined,
+  allowed: string[] = [],
+) {
   const role = extractRoleFromSession(session);
   if (!role) return false;
   return allowed.includes(role);
@@ -39,7 +45,10 @@ export function roleFromJwtToken(token?: JWT | null) {
 }
 
 /** Small guard helper to throw a consistent error (for route handlers) */
-export function ensureHasRole(session: Session | null | undefined, allowed: string[]) {
+export function ensureHasRole(
+  session: Session | null | undefined,
+  allowed: string[],
+) {
   if (!hasRole(session, allowed)) {
     const err = new Error("Forbidden: insufficient role");
     // attach a hint for handlers to return 403

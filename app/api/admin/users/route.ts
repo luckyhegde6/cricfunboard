@@ -1,89 +1,124 @@
 // app/api/admin/users/route.ts
+
+import bcrypt from "bcrypt";
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { z } from "zod";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import dbConnect from "@/lib/db";
 import UserModel from "@/models/User";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import bcrypt from "bcrypt";
-import { z } from "zod";
 
 const createSchema = z.object({
-    email: z.string().email(),
-    password: z.string().min(6),
-    role: z.enum(["user", "scorer", "captain", "vice-captain", "admin"]).optional(),
-    name: z.string().optional(),
+  email: z.string().email(),
+  password: z.string().min(6),
+  role: z
+    .enum(["user", "scorer", "captain", "vice-captain", "admin"])
+    .optional(),
+  name: z.string().optional(),
 });
 
 const updateSchema = z.object({
-    id: z.string(),
-    email: z.string().email().optional(),
-    password: z.string().min(6).optional(),
-    role: z.enum(["user", "scorer", "captain", "vice-captain", "admin"]).optional(),
-    name: z.string().optional(),
+  id: z.string(),
+  email: z.string().email().optional(),
+  password: z.string().min(6).optional(),
+  role: z
+    .enum(["user", "scorer", "captain", "vice-captain", "admin"])
+    .optional(),
+  name: z.string().optional(),
 });
 
-export async function GET(req: Request) {
-    await dbConnect();
-    const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    if ((session as any).user?.role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+export async function GET(_req: Request) {
+  await dbConnect();
+  const session = await getServerSession(authOptions);
+  if (!session)
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  if ((session as any).user?.role !== "admin")
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-    const users = await UserModel.find({}, { passwordHash: 0 }).lean();
-    return NextResponse.json(users);
+  const users = await UserModel.find({}, { passwordHash: 0 }).lean();
+  return NextResponse.json(users);
 }
 
 export async function POST(req: Request) {
-    await dbConnect();
-    const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    if ((session as any).user?.role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  await dbConnect();
+  const session = await getServerSession(authOptions);
+  if (!session)
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  if ((session as any).user?.role !== "admin")
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-    const body = await req.json();
-    const parsed = createSchema.safeParse(body);
-    if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  const body = await req.json();
+  const parsed = createSchema.safeParse(body);
+  if (!parsed.success)
+    return NextResponse.json(
+      { error: parsed.error.flatten() },
+      { status: 400 },
+    );
 
-    const { email, password, role, name } = parsed.data;
-    const existing = await UserModel.findOne({ email });
-    if (existing) return NextResponse.json({ error: "User exists" }, { status: 409 });
+  const { email, password, role, name } = parsed.data;
+  const existing = await UserModel.findOne({ email });
+  if (existing)
+    return NextResponse.json({ error: "User exists" }, { status: 409 });
 
-    const hash = await bcrypt.hash(password, 10);
-    const created = await UserModel.create({ email, passwordHash: hash, role: role || "user", name });
-    return NextResponse.json({ id: created._id, email: created.email, role: created.role, name: created.name });
+  const hash = await bcrypt.hash(password, 10);
+  const created = await UserModel.create({
+    email,
+    passwordHash: hash,
+    role: role || "user",
+    name,
+  });
+  return NextResponse.json({
+    id: created._id,
+    email: created.email,
+    role: created.role,
+    name: created.name,
+  });
 }
 
 export async function PUT(req: Request) {
-    await dbConnect();
-    const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    if ((session as any).user?.role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  await dbConnect();
+  const session = await getServerSession(authOptions);
+  if (!session)
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  if ((session as any).user?.role !== "admin")
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-    const body = await req.json();
-    const parsed = updateSchema.safeParse(body);
-    if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  const body = await req.json();
+  const parsed = updateSchema.safeParse(body);
+  if (!parsed.success)
+    return NextResponse.json(
+      { error: parsed.error.flatten() },
+      { status: 400 },
+    );
 
-    const { id, email, password, role, name } = parsed.data;
-    const update: any = {};
-    if (email) update.email = email;
-    if (role) update.role = role;
-    if (name) update.name = name;
-    if (password) update.passwordHash = await bcrypt.hash(password, 10);
+  const { id, email, password, role, name } = parsed.data;
+  const update: any = {};
+  if (email) update.email = email;
+  if (role) update.role = role;
+  if (name) update.name = name;
+  if (password) update.passwordHash = await bcrypt.hash(password, 10);
 
-    const updated = await UserModel.findByIdAndUpdate(id, update, { new: true }).lean();
-    if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
-    delete updated.passwordHash;
-    return NextResponse.json(updated);
+  const updated = await UserModel.findByIdAndUpdate(id, update, {
+    new: true,
+  }).lean();
+  if (!updated)
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  delete (updated as any).passwordHash;
+  return NextResponse.json(updated);
 }
 
 export async function DELETE(req: Request) {
-    await dbConnect();
-    const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    if ((session as any).user?.role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  await dbConnect();
+  const session = await getServerSession(authOptions);
+  if (!session)
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  if ((session as any).user?.role !== "admin")
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get("id");
-    if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
+  if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
-    await UserModel.findByIdAndDelete(id);
-    return NextResponse.json({ ok: true });
+  await UserModel.findByIdAndDelete(id);
+  return NextResponse.json({ ok: true });
 }

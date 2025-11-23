@@ -5,25 +5,25 @@ import Match from "@/models/Match";
 import Team from "@/models/Team";
 
 export async function GET() {
-    await dbConnect();
-    // Find first live match with full data
-    const match = await Match.findOne({ status: "live" }).lean();
+  await dbConnect();
+  // Find first live match with full data
+  const match = await Match.findOne({ status: "live" }).lean();
 
-    if (!match) {
-        return NextResponse.json({ match: null });
-    }
+  if (!match) {
+    return NextResponse.json({ match: null });
+  }
 
-    // Get team players
-    const [teamADoc, teamBDoc] = await Promise.all([
-        Team.findOne({ name: match.teamA }).lean(),
-        Team.findOne({ name: match.teamB }).lean()
-    ]);
+  // Get team players
+  const [teamADoc, teamBDoc] = await Promise.all([
+    Team.findOne({ name: (match as any).teamA }).lean(),
+    Team.findOne({ name: (match as any).teamB }).lean(),
+  ]);
 
-    return NextResponse.json({
-        match: {
-            ...match,
-            teamAPlayers: teamADoc?.players || [],
-            teamBPlayers: teamBDoc?.players || []
-        }
-    });
+  return NextResponse.json({
+    match: {
+      ...match,
+      teamAPlayers: (teamADoc as any)?.players || [],
+      teamBPlayers: (teamBDoc as any)?.players || [],
+    },
+  });
 }

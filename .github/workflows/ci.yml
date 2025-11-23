@@ -25,10 +25,13 @@ jobs:
         run: npm ci
 
       - name: Start socket server (background)
-        run: node scripts/socket-server.js &
+        run: npm run socket &
 
       - name: Run unit tests
         run: npm run test:unit
+
+      - name: Run coverage
+        run: npm run test:coverage
 
       - name: Start Next (build & start)
         run: |

@@ -10,12 +10,12 @@
  * Note: this file intentionally does NOT default-export NextAuth.
  */
 
-import NextAuth from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
-import clientPromise from "@/lib/mongo-client";
 import bcrypt from "bcrypt";
 import type { NextAuthOptions } from "next-auth";
+import NextAuth from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
+import clientPromise from "@/lib/mongo-client";
 
 export const runtime = "nodejs"; // ensure Node runtime (not edge)
 
@@ -23,7 +23,9 @@ export const runtime = "nodejs"; // ensure Node runtime (not edge)
 const mongoClient = await clientPromise;
 
 if (!process.env.NEXTAUTH_SECRET) {
-  console.warn("NEXTAUTH_SECRET not set. Set this in .env.local for production.");
+  console.warn(
+    "NEXTAUTH_SECRET not set. Set this in .env.local for production.",
+  );
 }
 
 export const authOptions: NextAuthOptions = {
@@ -50,7 +52,11 @@ export const authOptions: NextAuthOptions = {
         if (!passwordHash) return null;
         const ok = await bcrypt.compare(credentials.password, passwordHash);
         if (!ok) return null;
-        return { id: user._id.toString(), email: user.email, role: user.role || "user" } as any;
+        return {
+          id: user._id.toString(),
+          email: user.email,
+          role: user.role || "user",
+        } as any;
       },
     }),
     // Add other providers (Google/GitHub) here if desired
@@ -58,7 +64,8 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        (token as any).role = (user as any).role ?? (token as any).role ?? "user";
+        (token as any).role =
+          (user as any).role ?? (token as any).role ?? "user";
       }
       return token;
     },
