@@ -1,6 +1,10 @@
 // app/teams/page.tsx
 import TeamCard from "@/components/TeamCard";
 
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 async function fetchTeams() {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";

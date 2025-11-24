@@ -94,6 +94,17 @@ export default function Navbar() {
                   </NavLink>
                 )}
 
+                {["admin", "captain", "vicecaptain"].includes(
+                  (session?.user as any)?.role,
+                ) && (
+                    <NavLink
+                      href="/team/submit"
+                      active={pathname?.startsWith("/team/submit")}
+                    >
+                      Manage Team
+                    </NavLink>
+                  )}
+
                 {/* Team dropdown */}
                 <div className="relative" ref={dropdownRef}>
                   <button

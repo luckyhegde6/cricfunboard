@@ -1,0 +1,696 @@
+openapi: 3.0.0
+info:
+  title: CricFunBoard API
+  description: API documentation for the Cricket Scoreboard application
+  version: 1.0.0
+  contact:
+    name: CricFunBoard Team
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+  - url: https://your-production-url.com
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: User authentication endpoints
+  - name: Matches
+    description: Match management endpoints
+  - name: Teams
+    description: Team management endpoints
+  - name: Users
+    description: User management endpoints
+  - name: Admin
+    description: Admin-only endpoints
+
+paths:
+  /api/auth/[...nextauth]:
+    get:
+      tags:
+        - Authentication
+      summary: NextAuth authentication endpoints
+      description: Handles authentication via NextAuth (signin, callback, etc.)
+
+  /api/matches:
+    get:
+      tags:
+        - Matches
+      summary: Get all matches
+      description: Retrieve a list of all cricket matches
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Match"
+    post:
+      tags:
+        - Matches
+      summary: Create a new match
+      description: Create a new cricket match (Admin/Scorer only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMatch"
+      responses:
+        "201":
+          description: Match created successfully
+        "401":
+          description: Unauthorized
+
+  /api/matches/live:
+    get:
+      tags:
+        - Matches
+      summary: Get live matches
+      description: Retrieve all currently live matches
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Match"
+
+  /api/matches/{id}:
+    get:
+      tags:
+        - Matches
+      summary: Get match by ID
+      description: Retrieve a specific match by its ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Match"
+        "404":
+          description: Match not found
+    patch:
+      tags:
+        - Matches
+      summary: Update match
+      description: Update match details (Admin/Scorer only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMatch"
+      responses:
+        "200":
+          description: Match updated successfully
+        "401":
+          description: Unauthorized
+    delete:
+      tags:
+        - Matches
+      summary: Delete match
+      description: Delete a match (Admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Match deleted successfully
+        "401":
+          description: Unauthorized
+
+  /api/matches/{id}/start:
+    post:
+      tags:
+        - Matches
+      summary: Start match
+      description: Start a scheduled match (Scorer only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Match started successfully
+        "401":
+          description: Unauthorized
+
+  /api/matches/{id}/toss:
+    post:
+      tags:
+        - Matches
+      summary: Record toss
+      description: Record the toss result (Scorer only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                winner:
+                  type: string
+                decision:
+                  type: string
+                  enum: [bat, bowl]
+      responses:
+        "200":
+          description: Toss recorded successfully
+
+  /api/matches/{id}/score:
+    post:
+      tags:
+        - Matches
+      summary: Update score
+      description: Update match score (Scorer only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScoreUpdate"
+      responses:
+        "200":
+          description: Score updated successfully
+
+  /api/matches/{id}/events:
+    get:
+      tags:
+        - Matches
+      summary: Get match events
+      description: Retrieve all events for a match
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MatchEvent"
+    post:
+      tags:
+        - Matches
+      summary: Add match event
+      description: Add a new event to the match (Scorer only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MatchEvent"
+      responses:
+        "201":
+          description: Event added successfully
+
+  /api/matches/{id}/end-innings:
+    post:
+      tags:
+        - Matches
+      summary: End innings
+      description: End the current innings (Scorer only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Innings ended successfully
+
+  /api/matches/{id}/end-match:
+    post:
+      tags:
+        - Matches
+      summary: End match
+      description: End the match (Scorer only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Match ended successfully
+
+  /api/matches/{id}/assign-scorer:
+    post:
+      tags:
+        - Matches
+      summary: Assign scorer
+      description: Assign a scorer to the match (Admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                scorerId:
+                  type: string
+      responses:
+        "200":
+          description: Scorer assigned successfully
+
+  /api/teams:
+    get:
+      tags:
+        - Teams
+      summary: Get all teams
+      description: Retrieve a list of all teams
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Team"
+    post:
+      tags:
+        - Teams
+      summary: Create a new team
+      description: Create a new team (Captain/Vice-Captain only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTeam"
+      responses:
+        "201":
+          description: Team created successfully
+
+  /api/teams/{id}:
+    get:
+      tags:
+        - Teams
+      summary: Get team by ID
+      description: Retrieve a specific team by its ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Team"
+    patch:
+      tags:
+        - Teams
+      summary: Update team
+      description: Update team details (Captain/Vice-Captain only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTeam"
+      responses:
+        "200":
+          description: Team updated successfully
+    delete:
+      tags:
+        - Teams
+      summary: Delete team
+      description: Delete a team (Admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Team deleted successfully
+
+  /api/users:
+    get:
+      tags:
+        - Users
+      summary: Get all users
+      description: Retrieve a list of all users (Admin only)
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+
+  /api/user/password:
+    put:
+      tags:
+        - Users
+      summary: Change password
+      description: Change the current user's password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                currentPassword:
+                  type: string
+                newPassword:
+                  type: string
+      responses:
+        "200":
+          description: Password changed successfully
+
+  /api/user/role:
+    get:
+      tags:
+        - Users
+      summary: Get current user role
+      description: Get the role of the currently authenticated user
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  role:
+                    type: string
+
+  /api/admin/users:
+    get:
+      tags:
+        - Admin
+      summary: Get all users (Admin)
+      description: Retrieve all users with admin privileges
+      responses:
+        "200":
+          description: Successful response
+    post:
+      tags:
+        - Admin
+      summary: Create user
+      description: Create a new user (Admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUser"
+      responses:
+        "201":
+          description: User created successfully
+
+  /api/admin/settings:
+    get:
+      tags:
+        - Admin
+      summary: Get settings
+      description: Get application settings (Admin only)
+      responses:
+        "200":
+          description: Successful response
+    put:
+      tags:
+        - Admin
+      summary: Update settings
+      description: Update application settings (Admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Settings updated successfully
+
+components:
+  schemas:
+    Match:
+      type: object
+      properties:
+        _id:
+          type: string
+        name:
+          type: string
+        teamA:
+          type: string
+        teamB:
+          type: string
+        venue:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [scheduled, live, completed]
+        maxOvers:
+          type: number
+        scorerId:
+          type: string
+        captainId:
+          type: string
+        viceCaptainId:
+          type: string
+        summary:
+          type: object
+          properties:
+            runs:
+              type: number
+            wickets:
+              type: number
+            overs:
+              type: number
+            balls:
+              type: number
+
+    CreateMatch:
+      type: object
+      required:
+        - name
+        - teamA
+        - teamB
+        - venue
+        - maxOvers
+      properties:
+        name:
+          type: string
+        teamA:
+          type: string
+        teamB:
+          type: string
+        venue:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        maxOvers:
+          type: number
+
+    UpdateMatch:
+      type: object
+      properties:
+        name:
+          type: string
+        venue:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+
+    ScoreUpdate:
+      type: object
+      properties:
+        runs:
+          type: number
+        wickets:
+          type: number
+        extras:
+          type: object
+
+    MatchEvent:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [ball, wicket, extra, announcement]
+        runs:
+          type: number
+        wicket:
+          type: boolean
+        batter:
+          type: string
+        bowler:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    Team:
+      type: object
+      properties:
+        _id:
+          type: string
+        name:
+          type: string
+        captainId:
+          type: string
+        viceCaptainId:
+          type: string
+        contactEmail:
+          type: string
+        players:
+          type: array
+          items:
+            type: object
+            properties:
+              playerId:
+                type: string
+              name:
+                type: string
+              role:
+                type: string
+                enum: [batsman, bowler, allrounder, keeper]
+              isCaptain:
+                type: boolean
+              isViceCaptain:
+                type: boolean
+              isExtra:
+                type: boolean
+
+    CreateTeam:
+      type: object
+      required:
+        - name
+        - contactEmail
+      properties:
+        name:
+          type: string
+        contactEmail:
+          type: string
+        players:
+          type: array
+          items:
+            type: object
+
+    UpdateTeam:
+      type: object
+      properties:
+        name:
+          type: string
+        contactEmail:
+          type: string
+        players:
+          type: array
+
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: [admin, scorer, captain, vicecaptain, user]
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateUser:
+      type: object
+      required:
+        - email
+        - password
+        - role
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: [admin, scorer, captain, vicecaptain, user]
+
+  securitySchemes:
+    SessionAuth:
+      type: apiKey
+      in: cookie
+      name: next-auth.session-token
+      description: NextAuth session cookie
+
+security:
+  - SessionAuth: []

@@ -7,7 +7,11 @@ import { MongoClient } from "mongodb";
 // Load environment variables from .env.local
 dotenv.config({ path: ".env.local" });
 
-async function main() {
+export async function seedUsers() {
+  if (process.env.NODE_ENV !== "development" && process.env.FORCE_SEED !== "true") {
+    console.log("Seed script only runs in development or with FORCE_SEED=true");
+    return;
+  }
   const uri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/cricket";
   console.log("Connecting to", uri);
 
@@ -59,7 +63,9 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error("Seed users failed:", err);
-  process.exit(1);
-});
+if (require.main === module) {
+  seedUsers().catch((err) => {
+    console.error("Seed users failed:", err);
+    process.exit(1);
+  });
+}

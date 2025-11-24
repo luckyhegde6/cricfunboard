@@ -66,7 +66,7 @@ export default function MatchPage({
   const { data: session } = useSession();
   const router = useRouter();
 
-  const fetchMatch = () => {
+  const fetchMatch = React.useCallback(() => {
     fetch(`/api/matches/${id}?t=${Date.now()}`)
       .then(async (r) => {
         if (!r.ok) {
@@ -83,7 +83,7 @@ export default function MatchPage({
         console.error("Failed to fetch match:", err);
         setLoading(false);
       });
-  };
+  }, [id]);
 
   // Socket Connection
   useEffect(() => {
