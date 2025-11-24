@@ -1,0 +1,18 @@
+services:
+  mongo:
+    container_name: cricfunboard-mongo
+    image: mongo:latest
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - cricfunboard-network
+
+volumes:
+  mongodb_data:
+
+networks:
+  cricfunboard-network:
+    driver: bridge

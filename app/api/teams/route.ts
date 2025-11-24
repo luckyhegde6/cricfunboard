@@ -35,6 +35,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid data" }, { status: 400 });
     }
 
+    const activePlayers = players.filter((p: any) => !p.isExtra);
+    if (activePlayers.length < 11) {
+      return NextResponse.json(
+        { error: "Team must have at least 11 active players (non-extras)" },
+        { status: 400 },
+      );
+    }
+
     // Check if team exists
     const existingTeam = await Team.findOne({ name });
 
