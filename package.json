@@ -85,5 +85,16 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
     "whatwg-fetch": "^3.6.20"
+  },
+  "overrides": {
+    "react-copy-to-clipboard": {
+      "react": "$react"
+    },
+    "react-debounce-input": {
+      "react": "$react"
+    },
+    "react-inspector": {
+      "react": "$react"
+    }
   }
 }
