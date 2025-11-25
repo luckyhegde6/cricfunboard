@@ -235,6 +235,49 @@ export async function seedTeams() {
       { upsert: true },
     );
     console.log("Seeded Team B");
+
+    // Helper to generate dummy players
+    const generatePlayers = (teamPrefix: string, startId: number) => {
+      const roles = ["batsman", "batsman", "batsman", "batsman", "keeper", "allrounder", "allrounder", "bowler", "bowler", "bowler", "bowler"];
+      return roles.map((role, index) => ({
+        playerId: `P${startId + index}`,
+        name: `${teamPrefix} Player ${index + 1}`,
+        role,
+        isCaptain: index === 0,
+        isViceCaptain: index === 1,
+        isExtra: false,
+      }));
+    };
+
+    const newTeams = [
+      { name: "Team C", email: "captain1@test.com", viceEmail: "vice1@test.com", startId: 200 },
+      { name: "Team D", email: "captain2@test.com", viceEmail: "vice2@test.com", startId: 300 },
+      { name: "Team E", email: "captain3@test.com", viceEmail: "vice3@test.com", startId: 400 },
+      { name: "Team F", email: "captain4@test.com", viceEmail: "vice4@test.com", startId: 500 },
+      { name: "Team G", email: "captain5@test.com", viceEmail: "vice5@test.com", startId: 600 },
+    ];
+
+    for (const t of newTeams) {
+      const cap = await users.findOne({ email: t.email });
+      const vic = await users.findOne({ email: t.viceEmail });
+
+      const teamData = {
+        name: t.name,
+        captainId: cap?._id,
+        viceCaptainId: vic?._id,
+        contactEmail: t.email,
+        players: generatePlayers(t.name, t.startId),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      await teams.updateOne(
+        { name: t.name },
+        { $set: teamData },
+        { upsert: true },
+      );
+      console.log(`Seeded ${t.name}`);
+    }
   } finally {
     await client.close();
   }

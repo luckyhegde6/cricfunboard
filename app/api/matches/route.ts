@@ -19,12 +19,16 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const teamFilter = searchParams.get("team");
+  const tournamentId = searchParams.get("tournamentId");
 
-  let query = {};
+  let query: any = {};
   if (teamFilter) {
     query = {
       $or: [{ teamA: teamFilter }, { teamB: teamFilter }],
     };
+  }
+  if (tournamentId) {
+    query.tournamentId = tournamentId;
   }
 
   const matches = await MatchModel.find(query)

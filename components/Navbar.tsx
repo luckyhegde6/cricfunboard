@@ -6,12 +6,13 @@ import { useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 import AuthButton from "./AuthButton";
 import LiveScoreBanner from "./LiveScoreBanner";
+import RoleSwitcher from "./RoleSwitcher";
 
 export default function Navbar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const { data: session } = useSession();
-  const isAdmin = (session?.user as any)?.role === "admin";
+  const isAdmin = session?.user?.role === "admin";
   const [announcement, setAnnouncement] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [teams, setTeams] = useState<Array<{ _id: string; name: string }>>([]);
@@ -85,6 +86,12 @@ export default function Navbar() {
                 <NavLink href="/teams" active={pathname?.startsWith("/teams")}>
                   Teams
                 </NavLink>
+                <NavLink
+                  href="/tournaments"
+                  active={pathname?.startsWith("/tournaments")}
+                >
+                  Tournaments
+                </NavLink>
                 {isAdmin && (
                   <NavLink
                     href="/admin"
@@ -95,7 +102,7 @@ export default function Navbar() {
                 )}
 
                 {["admin", "captain", "vicecaptain"].includes(
-                  (session?.user as any)?.role,
+                  session?.user?.role || ""
                 ) && (
                     <NavLink
                       href="/team/submit"
@@ -150,6 +157,7 @@ export default function Navbar() {
               <div className="hidden sm:block text-sm text-slate-500 mr-2">
                 Follow live matches
               </div>
+              <RoleSwitcher />
               <AuthButton />
             </div>
           </div>

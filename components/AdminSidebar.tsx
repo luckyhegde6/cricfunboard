@@ -29,6 +29,12 @@ export default function AdminSidebar({
         >
           Settings
         </Link>
+        <Link
+          href="/admin/tournaments"
+          className="px-3 py-2 rounded hover:bg-slate-50"
+        >
+          Tournaments
+        </Link>
       </nav>
     </aside>
   );

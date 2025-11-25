@@ -11,6 +11,8 @@ const UserSchema = new Schema({
     index: true,
   },
   name: { type: String },
+  phone: { type: String },
+  bio: { type: String },
   createdAt: { type: Date, default: () => new Date() },
   updatedAt: { type: Date, default: () => new Date() },
 });
