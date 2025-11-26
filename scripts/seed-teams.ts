@@ -118,6 +118,14 @@ export async function seedTeams() {
           isViceCaptain: false,
           isExtra: true,
         },
+        {
+          playerId: "P012",
+          name: "Axar Patel",
+          role: "allrounder",
+          isCaptain: false,
+          isViceCaptain: false,
+          isExtra: true,
+        },
       ],
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -215,6 +223,14 @@ export async function seedTeams() {
           isViceCaptain: false,
           isExtra: true,
         },
+        {
+          playerId: "P112",
+          name: "Nathan Lyon",
+          role: "bowler",
+          isCaptain: false,
+          isViceCaptain: false,
+          isExtra: true,
+        },
       ],
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -238,14 +254,14 @@ export async function seedTeams() {
 
     // Helper to generate dummy players
     const generatePlayers = (teamPrefix: string, startId: number) => {
-      const roles = ["batsman", "batsman", "batsman", "batsman", "keeper", "allrounder", "allrounder", "bowler", "bowler", "bowler", "bowler"];
+      const roles = ["batsman", "batsman", "batsman", "batsman", "keeper", "allrounder", "allrounder", "bowler", "bowler", "bowler", "bowler", "bowler"];
       return roles.map((role, index) => ({
         playerId: `P${startId + index}`,
         name: `${teamPrefix} Player ${index + 1}`,
         role,
         isCaptain: index === 0,
         isViceCaptain: index === 1,
-        isExtra: false,
+        isExtra: index >= 11,
       }));
     };
 

@@ -53,13 +53,16 @@ export async function GET(
 
         if (activeMatches.length > 0 && !isAdmin) {
             return NextResponse.json({
-                canEdit: false,
+                canEdit: true,
                 reason: "Team has live or completed matches",
                 matches: activeMatches.map((m) => ({
                     id: m._id,
                     name: m.name,
                     status: m.status,
                 })),
+                isAdmin,
+                isCaptain,
+                isViceCaptain,
             });
         }
 

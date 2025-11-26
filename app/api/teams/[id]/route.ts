@@ -84,21 +84,26 @@ export async function PATCH(
       );
     }
 
-    // Check if team is in a live or completed match
-    const activeMatches = await MatchModel.find({
+    // Check if team is in any matches - provide info but don't block
+    const allMatches = await MatchModel.find({
       $or: [{ teamA: team.name }, { teamB: team.name }],
-      status: { $in: ["live", "completed"] },
-    });
+    }).select("status startTime");
 
-    if (activeMatches.length > 0 && !isAdmin) {
-      return NextResponse.json(
-        {
-          error:
-            "Cannot edit team while it has live or completed matches. Contact an admin.",
-        },
-        { status: 403 },
-      );
-    }
+    const liveMatches = allMatches.filter(m => m.status === "live");
+    const completedMatches = allMatches.filter(m => m.status === "completed");
+    const scheduledMatches = allMatches.filter(m => m.status === "scheduled");
+
+    // Inform about match status (match data is already protected via immutable events)
+    const matchInfo = {
+      hasLiveMatches: liveMatches.length > 0,
+      hasCompletedMatches: completedMatches.length > 0,
+      scheduledCount: scheduledMatches.length,
+      message: liveMatches.length > 0 || completedMatches.length > 0
+        ? "This team has live or completed matches. Roster changes will only affect future scheduled matches. Historical match data is preserved."
+        : scheduledMatches.length > 0
+          ? `Roster changes will affect ${scheduledMatches.length} upcoming scheduled match(es).`
+          : "No upcoming matches found."
+    };
 
     // Update players (captain/vice-captain can only edit players)
     if (players && Array.isArray(players)) {
@@ -168,7 +173,11 @@ export async function PATCH(
     team.updatedAt = new Date();
     await team.save();
 
-    return NextResponse.json({ message: "Team updated", team });
+    return NextResponse.json({
+      message: "Team updated",
+      team,
+      matchInfo
+    });
   } catch (error: any) {
     console.error("Error updating team:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
