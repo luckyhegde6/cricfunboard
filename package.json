@@ -14,19 +14,31 @@
     "test:e2e": "playwright test",
     "test": "npm run test:unit",
     "test:coverage": "jest --coverage",
+    "test:coverage:unit": "jest --coverage --testPathIgnorePatterns=aggregation.test.ts",
     "socket": "ts-node --compiler-options \"{\\\"module\\\":\\\"commonjs\\\"}\" ./scripts/start-socket-server.ts",
     "dev:socket": "ts-node --compiler-options \"{\\\"module\\\":\\\"commonjs\\\"}\" ./scripts/start-socket-server.ts",
     "seed:admin": "ts-node scripts/seed-admin.ts",
     "seed:users": "ts-node scripts/seed-users.ts",
     "seed:teams": "ts-node scripts/seed-teams.ts",
     "seed:scorer": "ts-node scripts/seed-scorer.ts",
-    "seed:match": "ts-node scripts/seed-matchData.ts"
+    "seed:match": "ts-node scripts/seed-matchData.ts",
+    "seed:venues": "ts-node scripts/seed-venues.ts",
+    "seed:tournaments": "ts-node scripts/seed-tournaments.ts",
+    "seed:all": "ts-node scripts/seed-all.ts",
+    "local": "ts-node scripts/start-local.ts",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:build": "docker-compose build",
+    "docker:logs": "docker-compose logs -f",
+    "docker:terminate": "docker-compose down -v --rmi local"
   },
   "dependencies": {
     "@auth/mongodb-adapter": "^3.11.1",
+    "@react-google-maps/api": "^2.20.7",
     "autoprefixer": "^10.4.22",
     "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
+    "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "ioredis": "^5.8.2",
@@ -42,6 +54,8 @@
     "react-dom": "19.2.0",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-react": "^5.30.2",
     "tailwindcss": "^4.1.17",
     "zod": "^4.1.12"
   },
@@ -58,6 +72,8 @@
     "@types/node": "^20.19.25",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-react": "^5.18.0",
     "cross-env": "^10.1.0",
     "husky": "^9.1.7",
     "jest": "^30.2.0",
@@ -65,6 +81,7 @@
     "jsdom": "^27.2.0",
     "mongodb-memory-server": "^10.3.0",
     "msw": "^2.12.2",
+    "null-loader": "^4.0.1",
     "pino-pretty": "^13.1.2",
     "playwright": "^1.56.1",
     "prettier": "^3.6.2",
@@ -73,5 +90,16 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
     "whatwg-fetch": "^3.6.20"
+  },
+  "overrides": {
+    "react-copy-to-clipboard": {
+      "react": "$react"
+    },
+    "react-debounce-input": {
+      "react": "$react"
+    },
+    "react-inspector": {
+      "react": "$react"
+    }
   }
 }

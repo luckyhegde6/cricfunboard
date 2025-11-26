@@ -1,6 +1,6 @@
 // components/UsersList.tsx
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import UserForm from "./UserForm";
 
 type User = { _id: string; email: string; role: string; name?: string };
@@ -11,7 +11,7 @@ export default function UsersList() {
   const [editing, setEditing] = useState<User | null>(null);
   const [showForm, setShowForm] = useState(false);
 
-  async function load() {
+  const load = useCallback(async () => {
     setLoading(true);
     const res = await fetch("/api/admin/users");
     if (res.ok) {
@@ -20,7 +20,7 @@ export default function UsersList() {
       setUsers([]);
     }
     setLoading(false);
-  }
+  }, []);
 
   useEffect(() => {
     load();
@@ -104,13 +104,12 @@ export default function UsersList() {
                   <td className="px-6 py-4">
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize
-                                            ${
-                                              u.role === "admin"
-                                                ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
-                                                : u.role === "scorer"
-                                                  ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
-                                                  : "bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300"
-                                            }`}
+                                            ${u.role === "admin"
+                          ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
+                          : u.role === "scorer"
+                            ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+                            : "bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300"
+                        }`}
                     >
                       {u.role}
                     </span>

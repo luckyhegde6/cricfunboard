@@ -6,7 +6,11 @@ import { MongoClient } from "mongodb";
 // Load environment variables from .env.local
 dotenv.config({ path: ".env.local" });
 
-async function main() {
+export async function seedTeams() {
+  if (process.env.NODE_ENV !== "development" && process.env.FORCE_SEED !== "true") {
+    console.log("Seed script only runs in development or with FORCE_SEED=true");
+    return;
+  }
   const uri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/cricket";
   const client = new MongoClient(uri);
   await client.connect();
@@ -114,6 +118,14 @@ async function main() {
           isViceCaptain: false,
           isExtra: true,
         },
+        {
+          playerId: "P012",
+          name: "Axar Patel",
+          role: "allrounder",
+          isCaptain: false,
+          isViceCaptain: false,
+          isExtra: true,
+        },
       ],
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -211,6 +223,14 @@ async function main() {
           isViceCaptain: false,
           isExtra: true,
         },
+        {
+          playerId: "P112",
+          name: "Nathan Lyon",
+          role: "bowler",
+          isCaptain: false,
+          isViceCaptain: false,
+          isExtra: true,
+        },
       ],
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -231,12 +251,57 @@ async function main() {
       { upsert: true },
     );
     console.log("Seeded Team B");
+
+    // Helper to generate dummy players
+    const generatePlayers = (teamPrefix: string, startId: number) => {
+      const roles = ["batsman", "batsman", "batsman", "batsman", "keeper", "allrounder", "allrounder", "bowler", "bowler", "bowler", "bowler", "bowler"];
+      return roles.map((role, index) => ({
+        playerId: `P${startId + index}`,
+        name: `${teamPrefix} Player ${index + 1}`,
+        role,
+        isCaptain: index === 0,
+        isViceCaptain: index === 1,
+        isExtra: index >= 11,
+      }));
+    };
+
+    const newTeams = [
+      { name: "Team C", email: "captain1@test.com", viceEmail: "vice1@test.com", startId: 200 },
+      { name: "Team D", email: "captain2@test.com", viceEmail: "vice2@test.com", startId: 300 },
+      { name: "Team E", email: "captain3@test.com", viceEmail: "vice3@test.com", startId: 400 },
+      { name: "Team F", email: "captain4@test.com", viceEmail: "vice4@test.com", startId: 500 },
+      { name: "Team G", email: "captain5@test.com", viceEmail: "vice5@test.com", startId: 600 },
+    ];
+
+    for (const t of newTeams) {
+      const cap = await users.findOne({ email: t.email });
+      const vic = await users.findOne({ email: t.viceEmail });
+
+      const teamData = {
+        name: t.name,
+        captainId: cap?._id,
+        viceCaptainId: vic?._id,
+        contactEmail: t.email,
+        players: generatePlayers(t.name, t.startId),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      await teams.updateOne(
+        { name: t.name },
+        { $set: teamData },
+        { upsert: true },
+      );
+      console.log(`Seeded ${t.name}`);
+    }
   } finally {
     await client.close();
   }
 }
 
-main().catch((err) => {
-  console.error("Seed teams failed:", err);
-  process.exit(1);
-});
+if (require.main === module) {
+  seedTeams().catch((err) => {
+    console.error("Seed teams failed:", err);
+    process.exit(1);
+  });
+}

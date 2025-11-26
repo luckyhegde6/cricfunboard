@@ -4,7 +4,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import MatchesTabs, { type MatchType } from "@/components/MatchesTabs";
 import MatchTopStats from "@/components/MatchTopStats";
-import MatchControls from "@/components/scorer/MatchControls";
 import dbConnect from "@/lib/db";
 import Team from "@/models/Team";
 
@@ -63,14 +62,6 @@ export default async function MatchesPage() {
               teamAPlayers={teamAPlayers}
               teamBPlayers={teamBPlayers}
             />
-
-            <div className="mt-4">
-              <MatchControls
-                matchId={liveMatch._id}
-                matchState={liveMatch.status || "live"}
-                currentInnings={(liveMatch as any).currentInnings || 1}
-              />
-            </div>
           </div>
         </div>
       )}

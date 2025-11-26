@@ -169,7 +169,14 @@ export async function GET(
 }
 
 const patchSchema = z.object({
-  status: z.enum(["scheduled", "live", "completed", "abandoned"]).optional(),
+  status: z
+    .enum(["scheduled", "live", "completed", "abandoned", "cancelled"])
+    .optional(),
+  teamA: z.string().optional(),
+  teamB: z.string().optional(),
+  venue: z.string().optional(),
+  startTime: z.string().optional(),
+  announcement: z.string().optional(),
   currentBatters: z
     .object({
       striker: z.string().nullable().optional(),
@@ -223,9 +230,23 @@ export async function PATCH(
     );
   }
 
+  const { announcement, ...updateData } = parsed.data;
+
+  // Handle announcement creation if present
+  if (announcement) {
+    await MatchEvent.create({
+      matchId: id,
+      innings: 0, // System event
+      over: 0,
+      ball: 0,
+      type: "announcement",
+      commentary: announcement,
+    });
+  }
+
   const updated = await MatchModel.findByIdAndUpdate(
     id,
-    { $set: parsed.data },
+    { $set: updateData },
     { new: true },
   ).lean();
   console.log(`[PATCH Match] Updated:`, updated ? "Success" : "Not Found");
@@ -255,6 +276,19 @@ export async function PATCH(
         payload: updated,
       }),
     });
+
+    // Broadcast announcement if exists
+    if (announcement) {
+      await fetch("http://localhost:4000/broadcast", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          room: `match:${id}`,
+          event: "match:announcement",
+          payload: { message: announcement },
+        }),
+      });
+    }
   } catch (err) {
     console.error("Socket broadcast failed:", err);
   }

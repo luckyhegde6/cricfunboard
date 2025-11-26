@@ -76,7 +76,7 @@ export default function ScorePage({
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  const fetchMatch = () => {
+  const fetchMatch = React.useCallback(() => {
     // ... (existing fetchMatch logic)
     console.log("[ScorePage] Fetching match data for ID:", id);
     fetch(`/api/matches/${id}?t=${Date.now()}`)
@@ -99,7 +99,7 @@ export default function ScorePage({
         console.error("Failed to fetch match:", err);
         setLoading(false);
       });
-  };
+  }, [id, router]);
 
   // Socket Connection
   useEffect(() => {
@@ -338,27 +338,27 @@ export default function ScorePage({
   const strikerStats =
     strikerId && currentInningsData?.batting?.[strikerId]
       ? {
-          runs: currentInningsData.batting[strikerId].runs,
-          balls: currentInningsData.batting[strikerId].balls,
-        }
+        runs: currentInningsData.batting[strikerId].runs,
+        balls: currentInningsData.batting[strikerId].balls,
+      }
       : undefined;
 
   const nonStrikerStats =
     nonStrikerId && currentInningsData?.batting?.[nonStrikerId]
       ? {
-          runs: currentInningsData.batting[nonStrikerId].runs,
-          balls: currentInningsData.batting[nonStrikerId].balls,
-        }
+        runs: currentInningsData.batting[nonStrikerId].runs,
+        balls: currentInningsData.batting[nonStrikerId].balls,
+      }
       : undefined;
 
   const bowlerStats =
     bowlerId && currentInningsData?.bowling?.[bowlerId]
       ? {
-          overs: currentInningsData.bowling[bowlerId].overs,
-          maidens: currentInningsData.bowling[bowlerId].maidens,
-          runs: currentInningsData.bowling[bowlerId].runs,
-          wickets: currentInningsData.bowling[bowlerId].wickets,
-        }
+        overs: currentInningsData.bowling[bowlerId].overs,
+        maidens: currentInningsData.bowling[bowlerId].maidens,
+        runs: currentInningsData.bowling[bowlerId].runs,
+        wickets: currentInningsData.bowling[bowlerId].wickets,
+      }
       : undefined;
 
   const handleScoreSubmit = async (payload: any) => {
@@ -473,6 +473,9 @@ export default function ScorePage({
         </div>
       </div>
 
+      {/* DEBUG INFO */}
+
+
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
         {/* Match Status Header */}
         <MatchStatus
@@ -524,6 +527,15 @@ export default function ScorePage({
               </div>
             )}
 
+            <div className="mb-6">
+              <MatchControls
+                matchId={match._id}
+                matchState={match.matchState}
+                currentInnings={match.currentInnings}
+                onAction={fetchMatch}
+              />
+            </div>
+
             {/* Scorecard */}
             <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
               <div className="p-3 bg-slate-50 dark:bg-slate-700/50 border-b border-slate-200 dark:border-slate-700 font-semibold text-sm">
@@ -545,7 +557,7 @@ export default function ScorePage({
       {/* Modals */}
       <SelectBatsmanModal
         isOpen={showBatsmanModal}
-        onClose={() => {}} // Force selection
+        onClose={() => { }} // Force selection
         onSubmit={handleBatsmanSelect}
         players={availableBatters}
         role={batsmanRole}
@@ -553,7 +565,7 @@ export default function ScorePage({
 
       <SelectBowlerModal
         isOpen={showBowlerModal}
-        onClose={() => {}} // Force selection
+        onClose={() => { }} // Force selection
         onSubmit={handleBowlerSelect}
         players={availableBowlers}
       />
@@ -568,21 +580,21 @@ export default function ScorePage({
         striker={
           currentStriker
             ? {
-                id: currentStriker,
-                name:
-                  allPlayers.find((p: any) => p.playerId === currentStriker)
-                    ?.name || currentStriker,
-              }
+              id: currentStriker,
+              name:
+                allPlayers.find((p: any) => p.playerId === currentStriker)
+                  ?.name || currentStriker,
+            }
             : null
         }
         nonStriker={
           currentNonStriker
             ? {
-                id: currentNonStriker,
-                name:
-                  allPlayers.find((p: any) => p.playerId === currentNonStriker)
-                    ?.name || currentNonStriker,
-              }
+              id: currentNonStriker,
+              name:
+                allPlayers.find((p: any) => p.playerId === currentNonStriker)
+                  ?.name || currentNonStriker,
+            }
             : null
         }
       />

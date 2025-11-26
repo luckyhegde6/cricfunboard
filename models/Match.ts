@@ -6,10 +6,11 @@ const MatchSchema = new Schema({
   teamA: { type: String, required: true },
   teamB: { type: String, required: true },
   venue: { type: String },
+  tournamentId: { type: Schema.Types.ObjectId, ref: "Tournament" },
   startTime: { type: Date },
   status: {
     type: String,
-    enum: ["scheduled", "live", "completed", "abandoned"],
+    enum: ["scheduled", "live", "completed", "abandoned", "cancelled"],
     default: "scheduled",
     index: true,
   },

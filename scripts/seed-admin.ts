@@ -20,7 +20,11 @@ import { MongoClient } from "mongodb";
 // Load environment variables from .env.local
 dotenv.config({ path: ".env.local" });
 
-async function main() {
+export async function seedAdmin() {
+  if (process.env.NODE_ENV !== "development" && process.env.FORCE_SEED !== "true") {
+    console.log("Seed script only runs in development or with FORCE_SEED=true");
+    return; // Changed from process.exit(0) to return to allow sequence to continue or stop gracefully
+  }
   const uri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/cricket";
   const email = process.env.ADMIN_EMAIL || "luckyhegdedev@gmail.com";
   const password = process.env.ADMIN_PASSWORD || "password123";
@@ -64,7 +68,9 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error("Seed failed:", err);
-  process.exit(1);
-});
+if (require.main === module) {
+  seedAdmin().catch((err) => {
+    console.error("Seed failed:", err);
+    process.exit(1);
+  });
+}

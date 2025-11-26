@@ -29,7 +29,7 @@ if (!process.env.NEXTAUTH_SECRET) {
 }
 
 export const authOptions: NextAuthOptions = {
-  adapter: MongoDBAdapter(mongoClient),
+  adapter: MongoDBAdapter(mongoClient) as any,
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60,
@@ -62,17 +62,24 @@ export const authOptions: NextAuthOptions = {
     // Add other providers (Google/GitHub) here if desired
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
-        (token as any).role =
-          (user as any).role ?? (token as any).role ?? "user";
+        token.role = user.role || "user";
+        token.originalRole = user.role || "user"; // Set initial originalRole
       }
+
+      // Handle role update (impersonation)
+      if (trigger === "update" && session?.role) {
+        token.role = session.role;
+      }
+
       return token;
     },
     async session({ session, token }) {
       session.user = session.user || {};
       (session.user as any).id = token.sub;
-      (session.user as any).role = (token as any).role ?? "user";
+      (session.user as any).role = token.role || "user";
+      (session.user as any).originalRole = token.originalRole;
       return session;
     },
   },

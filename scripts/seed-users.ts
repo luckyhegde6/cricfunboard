@@ -7,7 +7,11 @@ import { MongoClient } from "mongodb";
 // Load environment variables from .env.local
 dotenv.config({ path: ".env.local" });
 
-async function main() {
+export async function seedUsers() {
+  if (process.env.NODE_ENV !== "development" && process.env.FORCE_SEED !== "true") {
+    console.log("Seed script only runs in development or with FORCE_SEED=true");
+    return;
+  }
   const uri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/cricket";
   console.log("Connecting to", uri);
 
@@ -30,6 +34,18 @@ async function main() {
       },
       { email: "scorer@test.com", role: "scorer", name: "Scorer User" },
       { email: "user@test.com", role: "user", name: "Regular User" },
+      // Additional Captains
+      { email: "captain1@test.com", role: "captain", name: "Captain One" },
+      { email: "captain2@test.com", role: "captain", name: "Captain Two" },
+      { email: "captain3@test.com", role: "captain", name: "Captain Three" },
+      { email: "captain4@test.com", role: "captain", name: "Captain Four" },
+      { email: "captain5@test.com", role: "captain", name: "Captain Five" },
+      // Additional Vice Captains
+      { email: "vice1@test.com", role: "vicecaptain", name: "Vice One" },
+      { email: "vice2@test.com", role: "vicecaptain", name: "Vice Two" },
+      { email: "vice3@test.com", role: "vicecaptain", name: "Vice Three" },
+      { email: "vice4@test.com", role: "vicecaptain", name: "Vice Four" },
+      { email: "vice5@test.com", role: "vicecaptain", name: "Vice Five" },
     ];
 
     for (const u of dummyUsers) {
@@ -59,7 +75,9 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error("Seed users failed:", err);
-  process.exit(1);
-});
+if (require.main === module) {
+  seedUsers().catch((err) => {
+    console.error("Seed users failed:", err);
+    process.exit(1);
+  });
+}
