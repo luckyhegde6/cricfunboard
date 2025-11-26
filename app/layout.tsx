@@ -5,6 +5,43 @@ import Navbar from "@/components/Navbar";
 import { Providers } from "./providers";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Cricfunboard',
+  description: 'Cricket Scoreboard Applicationc for Local Tournaments',
+  keywords: ['Cricket', 'Scoreboard', 'Tournament', 'Local', 'Cricfunboard'],
+  authors: [{ name: 'Lucky Hegde' }],
+  publisher: 'Lucky Hegde',
+  openGraph: {
+    title: 'Cricfunboard',
+    description: 'Cricket Scoreboard Applicationc for Local Tournaments',
+    type: 'website',
+    locale: 'en_IN',
+    siteName: 'Cricfunboard',
+  },
+  icons: {
+    icon: '/favicon.svg',
+    apple: '/apple-touch-icon.png',
+  },
+  robots: {
+    index: true,
+    googleBot: {
+      index: true,
+    },
+  },
+  verification: {
+    google: 'google-site-verification',
+    yandex: 'yandex-verification',
+    yahoo: 'yahoo-site-verification',
+  },
+  themeColor: '#0f172a',
+  colorScheme: 'light dark',
+  metadataBase: new URL('https://github.com/luckyhegde6/cricfunboard'),
+  alternates: {
+    canonical: '/cricfunboard',
+  },
+};
 
 export default async function RootLayout({
   children,
