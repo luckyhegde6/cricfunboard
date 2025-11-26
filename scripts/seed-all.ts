@@ -4,6 +4,8 @@ import { seedMatchData } from "./seed-matchData";
 import { seedScorer } from "./seed-scorer";
 import { seedTeams } from "./seed-teams";
 import { seedUsers } from "./seed-users";
+import seedVenues from "./seed-venues";
+import seedTournaments from "./seed-tournaments";
 
 // Load environment variables from .env.local
 dotenv.config({ path: ".env.local" });
@@ -32,6 +34,14 @@ async function main() {
         console.log("\n--- Seeding Teams ---");
         await seedTeams();
         console.log("✓ Teams seeded");
+
+        console.log("\n--- Seeding Venues ---");
+        await seedVenues();
+        console.log("✓ Venues seeded");
+
+        console.log("\n--- Seeding Tournaments & Matches ---");
+        await seedTournaments();
+        console.log("✓ Tournaments & Matches seeded");
 
         console.log("\n--- Seeding Match Data ---");
         await seedMatchData();

@@ -1,10 +1,15 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface MatchEditModalProps {
     match?: any;
     onClose: () => void;
     onSave: () => void;
+}
+
+interface Team {
+    _id: string;
+    name: string;
 }
 
 export default function MatchEditModal({
@@ -20,7 +25,20 @@ export default function MatchEditModal({
             ? new Date(match.startTime).toISOString().slice(0, 16)
             : "",
     );
+    const [teams, setTeams] = useState<Team[]>([]);
     const [busy, setBusy] = useState(false);
+
+    useEffect(() => {
+        // Fetch teams for dropdowns
+        fetch("/api/teams")
+            .then((res) => res.json())
+            .then((data) => {
+                if (Array.isArray(data)) {
+                    setTeams(data);
+                }
+            })
+            .catch((err) => console.error("Failed to fetch teams:", err));
+    }, []);
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -63,25 +81,37 @@ export default function MatchEditModal({
                         <label className="block text-sm font-medium text-gray-700">
                             Team A
                         </label>
-                        <input
-                            type="text"
+                        <select
                             value={teamA}
                             onChange={(e) => setTeamA(e.target.value)}
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
                             required
-                        />
+                        >
+                            <option value="">-- Select Team A --</option>
+                            {teams.map((team) => (
+                                <option key={team._id} value={team.name}>
+                                    {team.name}
+                                </option>
+                            ))}
+                        </select>
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700">
                             Team B
                         </label>
-                        <input
-                            type="text"
+                        <select
                             value={teamB}
                             onChange={(e) => setTeamB(e.target.value)}
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
                             required
-                        />
+                        >
+                            <option value="">-- Select Team B --</option>
+                            {teams.map((team) => (
+                                <option key={team._id} value={team.name}>
+                                    {team.name}
+                                </option>
+                            ))}
+                        </select>
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700">
@@ -92,6 +122,7 @@ export default function MatchEditModal({
                             value={venue}
                             onChange={(e) => setVenue(e.target.value)}
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 border p-2"
+                            placeholder="Enter venue name"
                         />
                     </div>
                     <div>

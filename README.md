@@ -104,12 +104,16 @@ Seed scripts are available to populate the database with test data. They only ru
 ### Individual Seed Commands
 
 ```bash
-NODE_ENV=development npm run seed:users    # Create test users
-NODE_ENV=development npm run seed:admin    # Create admin user
-NODE_ENV=development npm run seed:scorer   # Create scorer user
-NODE_ENV=development npm run seed:teams    # Create test teams
-NODE_ENV=development npm run seed:match    # Create test match
-NODE_ENV=development npm run seed:all      # Run all seeds in sequence
+NODE_ENV=development npm run seed:users        # Create test users
+NODE_ENV=development npm run seed:admin        # Create admin user
+NODE_ENV=development npm run seed:scorer       # Create scorer user
+NODE_ENV=development npm run seed:teams        # Create test teams
+NODE_ENV=development npm run seed:venues       # Create 130+ cricket venues (Bangalore)
+NODE_ENV=development npm run seed:tournaments  # Create tournaments with matches
+NODE_ENV=development npm run seed:match        # Create test match
+NODE_ENV=development npm run seed:matchData    # Create test match data
+NODE_ENV=development npm run seed:venues        # Create test venues
+NODE_ENV=development npm run seed:all          # Run all seeds in sequence
 ```
 
 ### Force Seeding (Use with caution)
@@ -130,8 +134,9 @@ Interactive API documentation is available at:
 - **Authentication**: `/api/auth/[...nextauth]`
 - **Matches**: `/api/matches`, `/api/matches/{id}`, `/api/matches/live`
 - **Teams**: `/api/teams`, `/api/teams/{id}`
+- **Venues**: `/api/venues`, `/api/venues/{id}`
 - **Users**: `/api/users`, `/api/user/password`, `/api/user/role`
-- **Admin**: `/api/admin/users`, `/api/admin/settings`
+- **Admin**: `/api/admin/users`, `/api/admin/settings`, `/api/admin/stats`
 
 See the full API documentation at `/api-docs` for detailed information on all endpoints, request/response schemas, and authentication requirements.
 
@@ -243,6 +248,7 @@ npm run test:coverage
 | `MONGODB_URI` | MongoDB connection string | Yes |
 | `NEXTAUTH_URL` | Application URL | Yes |
 | `NEXTAUTH_SECRET` | NextAuth secret key | Yes |
+| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Google Maps API key for venue management | Optional |
 | `NEXT_PUBLIC_WS_URL` | WebSocket server URL | Optional |
 | `NODE_ENV` | Environment (development/production) | Auto-set |
 

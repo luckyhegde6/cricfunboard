@@ -101,6 +101,17 @@ export default function Navbar() {
                   </NavLink>
                 )}
 
+                {["captain", "vicecaptain"].includes(
+                  session?.user?.role || ""
+                ) && (
+                    <NavLink
+                      href="/teams/my-team"
+                      active={pathname?.startsWith("/teams/my-team")}
+                    >
+                      My Team
+                    </NavLink>
+                  )}
+
                 {["admin", "captain", "vicecaptain"].includes(
                   session?.user?.role || ""
                 ) && (

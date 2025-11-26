@@ -21,6 +21,8 @@
     "seed:teams": "ts-node scripts/seed-teams.ts",
     "seed:scorer": "ts-node scripts/seed-scorer.ts",
     "seed:match": "ts-node scripts/seed-matchData.ts",
+    "seed:venues": "ts-node scripts/seed-venues.ts",
+    "seed:tournaments": "ts-node scripts/seed-tournaments.ts",
     "seed:all": "ts-node scripts/seed-all.ts",
     "local": "ts-node scripts/start-local.ts",
     "docker:up": "docker-compose up -d",
