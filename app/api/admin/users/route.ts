@@ -15,6 +15,8 @@ const createSchema = z.object({
     .enum(["user", "scorer", "captain", "vice-captain", "admin"])
     .optional(),
   name: z.string().optional(),
+  phone: z.string().optional(),
+  bio: z.string().optional(),
 });
 
 const updateSchema = z.object({
@@ -25,6 +27,8 @@ const updateSchema = z.object({
     .enum(["user", "scorer", "captain", "vice-captain", "admin"])
     .optional(),
   name: z.string().optional(),
+  phone: z.string().optional(),
+  bio: z.string().optional(),
 });
 
 export async function GET(_req: Request) {
@@ -55,7 +59,7 @@ export async function POST(req: Request) {
       { status: 400 },
     );
 
-  const { email, password, role, name } = parsed.data;
+  const { email, password, role, name, phone, bio } = parsed.data;
   const existing = await UserModel.findOne({ email });
   if (existing)
     return NextResponse.json({ error: "User exists" }, { status: 409 });
@@ -66,12 +70,16 @@ export async function POST(req: Request) {
     passwordHash: hash,
     role: role || "user",
     name,
+    phone,
+    bio,
   });
   return NextResponse.json({
     id: created._id,
     email: created.email,
     role: created.role,
     name: created.name,
+    phone: created.phone,
+    bio: created.bio,
   });
 }
 
@@ -91,11 +99,13 @@ export async function PUT(req: Request) {
       { status: 400 },
     );
 
-  const { id, email, password, role, name } = parsed.data;
+  const { id, email, password, role, name, phone, bio } = parsed.data;
   const update: any = {};
   if (email) update.email = email;
   if (role) update.role = role;
   if (name) update.name = name;
+  if (phone) update.phone = phone;
+  if (bio) update.bio = bio;
   if (password) update.passwordHash = await bcrypt.hash(password, 10);
 
   const updated = await UserModel.findByIdAndUpdate(id, update, {

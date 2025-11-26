@@ -12,6 +12,8 @@ export default function UserForm({
 }) {
   const [email, setEmail] = useState(user?.email ?? "");
   const [name, setName] = useState(user?.name ?? "");
+  const [phone, setPhone] = useState(user?.phone ?? "");
+  const [bio, setBio] = useState(user?.bio ?? "");
   const [role, setRole] = useState(user?.role ?? "user");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -34,6 +36,8 @@ export default function UserForm({
             id: user._id,
             email,
             name,
+            phone,
+            bio,
             role,
             ...(password ? { password } : {}),
           }),
@@ -45,6 +49,8 @@ export default function UserForm({
           body: JSON.stringify({
             email,
             name,
+            phone,
+            bio,
             role,
             password: password || "password123",
           }),
@@ -129,6 +135,32 @@ export default function UserForm({
               onChange={(e) => setName(e.target.value)}
               className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-slate-900 dark:text-white placeholder-slate-400"
               placeholder="John Doe"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+              Phone Number
+            </label>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-slate-900 dark:text-white placeholder-slate-400"
+              placeholder="+1 234 567 8900"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+              Bio
+            </label>
+            <textarea
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              rows={3}
+              className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-slate-900 dark:text-white placeholder-slate-400"
+              placeholder="Short bio..."
             />
           </div>
 

@@ -75,12 +75,31 @@ async function main() {
     return res.json({ ok: true });
   });
 
-  // Example helper route to broadcast a test update
+  // Helper route to broadcast a test update
   app.post("/emit/test", (req, res) => {
     const { matchId, payload } = req.body;
     if (!matchId) return res.status(400).json({ error: "matchId required" });
     io.to(`match:${matchId}`).emit("match:update", payload || { note: "test" });
     return res.json({ ok: true });
+  });
+
+  // Stats endpoint for admin dashboard
+  app.get("/stats", (req, res) => {
+    const totalConnections = io.engine.clientsCount;
+    const rooms: Record<string, number> = {};
+
+    // Count sockets in each room
+    // Note: This is an expensive operation in large scale, but fine for this scale
+    for (const [roomName, roomState] of io.sockets.adapter.rooms) {
+      if (roomName.startsWith("match:")) {
+        rooms[roomName] = roomState.size;
+      }
+    }
+
+    return res.json({
+      totalConnections,
+      activeRooms: rooms,
+    });
   });
 
   server.listen(PORT, () => {

@@ -34,6 +34,18 @@ export async function seedUsers() {
       },
       { email: "scorer@test.com", role: "scorer", name: "Scorer User" },
       { email: "user@test.com", role: "user", name: "Regular User" },
+      // Additional Captains
+      { email: "captain1@test.com", role: "captain", name: "Captain One" },
+      { email: "captain2@test.com", role: "captain", name: "Captain Two" },
+      { email: "captain3@test.com", role: "captain", name: "Captain Three" },
+      { email: "captain4@test.com", role: "captain", name: "Captain Four" },
+      { email: "captain5@test.com", role: "captain", name: "Captain Five" },
+      // Additional Vice Captains
+      { email: "vice1@test.com", role: "vicecaptain", name: "Vice One" },
+      { email: "vice2@test.com", role: "vicecaptain", name: "Vice Two" },
+      { email: "vice3@test.com", role: "vicecaptain", name: "Vice Three" },
+      { email: "vice4@test.com", role: "vicecaptain", name: "Vice Four" },
+      { email: "vice5@test.com", role: "vicecaptain", name: "Vice Five" },
     ];
 
     for (const u of dummyUsers) {

@@ -11,6 +11,9 @@ const UserSchema = new Schema({
     index: true,
   },
   name: { type: String },
+  phone: { type: String },
+  bio: { type: String },
+  teamId: { type: Schema.Types.ObjectId, ref: "Team" }, // For captain/vicecaptain role
   createdAt: { type: Date, default: () => new Date() },
   updatedAt: { type: Date, default: () => new Date() },
 });

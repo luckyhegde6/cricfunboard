@@ -12,16 +12,40 @@ export default function AdminSidebar({
       <div className="font-semibold mb-4">Admin</div>
       <nav className="flex flex-col gap-2">
         <Link
+          href="/admin"
+          className="px-3 py-2 rounded hover:bg-slate-50"
+        >
+          Dashboard
+        </Link>
+        <Link
           href="/admin/users"
           className="px-3 py-2 rounded hover:bg-slate-50"
         >
           Users
         </Link>
         <Link
+          href="/admin/teams"
+          className="px-3 py-2 rounded hover:bg-slate-50"
+        >
+          Teams
+        </Link>
+        <Link
+          href="/admin/venues"
+          className="px-3 py-2 rounded hover:bg-slate-50"
+        >
+          Venues
+        </Link>
+        <Link
           href="/admin/matches"
           className="px-3 py-2 rounded hover:bg-slate-50"
         >
           Matches
+        </Link>
+        <Link
+          href="/admin/tournaments"
+          className="px-3 py-2 rounded hover:bg-slate-50"
+        >
+          Tournaments
         </Link>
         <Link
           href="/admin/settings"
