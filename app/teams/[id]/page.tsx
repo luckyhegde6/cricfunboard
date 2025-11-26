@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import TeamFixtures from "@/components/TeamFixtures";
+import TeamEditForm from "@/components/teams/TeamEditForm";
 
 type Player = {
   playerId: string;
@@ -35,6 +36,7 @@ export default function TeamDetailPage({
   const [loading, setLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
   const [teamId, setTeamId] = useState<string>("");
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     params.then(({ id }) => setTeamId(id));
@@ -77,6 +79,19 @@ export default function TeamDetailPage({
     fetchTeam();
   }, [teamId, status, session]);
 
+  const handleEditClick = () => {
+    if (!session?.user) return;
+    const userRole = (session.user as any).role;
+    const userId = (session.user as any).id;
+    const isCaptain = team?.captainId?._id === userId;
+
+    if (isCaptain) {
+      router.push("/teams/my-team");
+    } else if (userRole === "admin") {
+      setIsEditing(true);
+    }
+  };
+
   if (loading) {
     return <div className="p-6">Loading...</div>;
   }
@@ -113,9 +128,19 @@ export default function TeamDetailPage({
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-          {team.name}
-        </h1>
+        <div className="flex justify-between items-start">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
+            {team.name}
+          </h1>
+          {hasAccess && (
+            <button
+              onClick={handleEditClick}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+            >
+              Edit Team
+            </button>
+          )}
+        </div>
 
         {/* Captain and Vice-Captain Info - Only visible to admin/captain/vice-captain */}
         {hasAccess && (
@@ -257,6 +282,34 @@ export default function TeamDetailPage({
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal for Admin */}
+      {isEditing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <h2 className="text-2xl font-bold mb-4 text-slate-900 dark:text-white">
+                Edit Team
+              </h2>
+              <TeamEditForm
+                team={team}
+                onCancel={() => setIsEditing(false)}
+                onSave={() => {
+                  setIsEditing(false);
+                  // Reload team data
+                  setLoading(true);
+                  fetch(`/api/teams/${teamId}`)
+                    .then((res) => res.json())
+                    .then((data) => {
+                      setTeam(data);
+                      setLoading(false);
+                    });
+                }}
+              />
             </div>
           </div>
         </div>

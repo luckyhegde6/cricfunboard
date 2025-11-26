@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import TeamAssignModal from "@/components/admin/TeamAssignModal";
+import TeamEditForm from "@/components/teams/TeamEditForm";
 
 interface Team {
     _id: string;
@@ -16,6 +17,7 @@ export default function AdminTeamsPage() {
     const [teams, setTeams] = useState<Team[]>([]);
     const [loading, setLoading] = useState(true);
     const [assignTeam, setAssignTeam] = useState<Team | null>(null);
+    const [editingTeam, setEditingTeam] = useState<Team | null>(null);
 
     function loadTeams() {
         setLoading(true);
@@ -108,7 +110,13 @@ export default function AdminTeamsPage() {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                     {team.players?.length || 0}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
+                                    <button
+                                        onClick={() => setEditingTeam(team)}
+                                        className="text-blue-600 hover:text-blue-900"
+                                    >
+                                        Edit
+                                    </button>
                                     <button
                                         onClick={() => setAssignTeam(team)}
                                         className="text-indigo-600 hover:text-indigo-900"
@@ -128,6 +136,24 @@ export default function AdminTeamsPage() {
                     onClose={() => setAssignTeam(null)}
                     onSave={loadTeams}
                 />
+            )}
+
+            {editingTeam && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="p-6">
+                            <h2 className="text-2xl font-bold mb-4">Edit Team: {editingTeam.name}</h2>
+                            <TeamEditForm
+                                team={editingTeam}
+                                onCancel={() => setEditingTeam(null)}
+                                onSave={() => {
+                                    setEditingTeam(null);
+                                    loadTeams();
+                                }}
+                            />
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );
