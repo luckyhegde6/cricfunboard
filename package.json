@@ -14,6 +14,7 @@
     "test:e2e": "playwright test",
     "test": "npm run test:unit",
     "test:coverage": "jest --coverage",
+    "test:coverage:unit": "jest --coverage --testPathIgnorePatterns=aggregation.test.ts",
     "socket": "ts-node --compiler-options \"{\\\"module\\\":\\\"commonjs\\\"}\" ./scripts/start-socket-server.ts",
     "dev:socket": "ts-node --compiler-options \"{\\\"module\\\":\\\"commonjs\\\"}\" ./scripts/start-socket-server.ts",
     "seed:admin": "ts-node scripts/seed-admin.ts",

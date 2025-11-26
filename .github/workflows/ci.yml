@@ -52,4 +52,4 @@ jobs:
         run: npm run build
 
       - name: Test with Coverage
-        run: jest --coverage --testPathIgnorePatterns=aggregation.test.ts
+        run: npm run test:coverage:unit
