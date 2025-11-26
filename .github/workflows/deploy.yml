@@ -31,8 +31,8 @@ jobs:
             MONGODB_URI: "mongodb://127.0.0.1:27017/test"
             NEXTAUTH_SECRET: "dummy-secret-for-build"
             NEXTAUTH_URL: "https://luckyhegde6.github.io/cricfunboard"
-            ADMIN_EMAIL: ${{ env.ADMIN_EMAIL }}
-            ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+            ADMIN_EMAIL: "admin@test.com"
+            ADMIN_PASSWORD: "password123"
             NEXT_PUBLIC_WS_URL: "https://luckyhegde6.github.io/cricfunboard"
             NEXT_PUBLIC_BASE_URL: "https://luckyhegde6.github.io/cricfunboard"
             PORT_WS: 4000
